@@ -70,7 +70,7 @@ if (N>16):
 Nu = 1000 # Number of random unitaries to be used
 NM = 300 # Number of projective measurements (shots) per random unitary
 Partition_string = ['1'*x +'0'*(N-x) for x in range(1,N+1)] ## List of partitions for which we want to extract the purity (ex: '100000..' only the first spin)
-p_noise = 0.1 #Noise strength related to the second device
+p_noise = 0.1#Noise strength related to the second device
 
 ### Initiate Random Generator
 a = random.SystemRandom().randrange(2 ** 32 - 1) #Init Random Generator
@@ -114,7 +114,8 @@ print('Measurement data generated')
 Purity1 = get_Overlap(Meas_Data_1,Meas_Data_1,Partition_string,N,bias=True)
 Purity2 = get_Overlap(Meas_Data_2,Meas_Data_2,Partition_string,N,bias=True)
 Overlap = get_Overlap(Meas_Data_1,Meas_Data_2,Partition_string,N,bias=False)
-Fidelity = Overlap/np.sqrt(Purity1*Purity2)
+Fidelity = Overlap/np.maximum(Purity1,Purity2)
+Fidelity = 1*(Fidelity>1) + Fidelity*(Fidelity<=1) #Remove potential unphysical value due to shot noise
 
 print('Reconstructed Purities')
 for i,p in enumerate(Partition_string):
