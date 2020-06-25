@@ -31,7 +31,9 @@ def SingleQubitRotation_CUE(random_gen): #Generate a 2x2 CUE matrix (ref: http:/
     return U
 
 ## Parameters
-N = 10 # Number of qubits to analyze
+N = 10 # Number of qubits to analyze (necessary <= 16 for the present code due to the use of the function np.unpackbits)
+if (N>16):
+    print('Please reduce N (or adapt the call to np.unpackbits)')
 Nu = 1000 # Number of random unitaries to be used
 NM = 300 # Number of projective measurements (shots) per random unitary
 Partition_string = ['1'*x +'0'*(N-x) for x in range(1,N+1)] ## List of partitions for which we want to extract the purity (ex: '100000..' only the first spin)
