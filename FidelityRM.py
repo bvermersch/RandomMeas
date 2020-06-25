@@ -115,9 +115,8 @@ Purity1 = get_Overlap(Meas_Data_1,Meas_Data_1,Partition_string,N,bias=True)
 Purity2 = get_Overlap(Meas_Data_2,Meas_Data_2,Partition_string,N,bias=True)
 Overlap = get_Overlap(Meas_Data_1,Meas_Data_2,Partition_string,N,bias=False)
 Fidelity = Overlap/np.maximum(Purity1,Purity2)
-Fidelity = 1*(Fidelity>1) + Fidelity*(Fidelity<=1) #Remove potential unphysical value due to shot noise
 
-print('Reconstructed Purities')
+print('Reconstructed Fidelities')
 for i,p in enumerate(Partition_string):
     print('Partition ',p, ":", Fidelity[i])
 print('Estimated depolarization noise ',1 - Fidelity[-1])
