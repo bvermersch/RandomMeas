@@ -21,44 +21,22 @@
 import random
 import numpy as np
 from scipy import linalg
-#from qutip import *
 
-def SingleQubitRotation(random_gen,mode):
-    U = 1j*np.zeros((2,2))
-    if mode=='CUE':
-        #Generate a 2x2 CUE matrix (ref: http://www.ams.org/notices/200705/fea-mezzadri-web.pdf)
-        U = (random_gen.randn(2,2)+1j*random_gen.randn(2,2))/np.sqrt(2)
-        q,r = linalg.qr(U)
-        d = np.diagonal(r)
-        ph = d/np.absolute(d)
-        U = np.multiply(q,ph,q)
-    else:
-        ## Equivalently we can measure randomly in the x,y, or z basis:
-        pick = random_gen.randint(3)
-        if pick==0: #Measurement setting y: we apply pi/4 along x before measurement
-            U[0,0] = 1./np.sqrt(2)
-            U[1,1] = 1./np.sqrt(2)
-            U[0,1] = -1j*1./np.sqrt(2)
-            U[1,0] = -1j*1./np.sqrt(2)
-        elif pick==1: #Measurement setting x: we apply pi/4 along y before measurement
-            U[0,0] = 1./np.sqrt(2)
-            U[1,1] = 1./np.sqrt(2)
-            U[0,1] = -1./np.sqrt(2)
-            U[1,0] = 1./np.sqrt(2)
-        else:
-            U = np.eye(2)
+def SingleQubitRotation_CUE(random_gen): #Generate a 2x2 CUE matrix (ref: http://www.ams.org/notices/200705/fea-mezzadri-web.pdf)
+    U = (random_gen.randn(2,2)+1j*random_gen.randn(2,2))/np.sqrt(2)
+    q,r = linalg.qr(U)
+    d = np.diagonal(r)
+    ph = d/np.absolute(d)
+    U = np.multiply(q,ph,q)
     return U
 
 ## Parameters
-N = 3 # Number of qubits to analyze (necessary <= 16 for the present code due to the use of the function np.unpackbits)
+N = 10 # Number of qubits to analyze (necessary <= 16 for the present code due to the use of the function np.unpackbits)
 if (N>16):
     print('Please reduce N (or adapt the call to np.unpackbits)')
-Nu = 2000 # Number of random unitaries to be used
-NM = 200 # Number of projective measurements (shots) per random unitary
-mode = 'CUE'
+Nu = 1000 # Number of random unitaries to be used
+NM = 300 # Number of projective measurements (shots) per random unitary
 Partition_string = ['1'*x +'0'*(N-x) for x in range(1,N+1)] ## List of partitions for which we want to extract the purity (ex: '100000..' only the first spin)
-Partition_string = [ '0'*x+'1'+'0'*(N-x-1) for x in range(N)]
-Partition_string += [ '1'*N ]
 
 ### Initiate Random Generator
 a = random.SystemRandom().randrange(2 ** 32 - 1) #Init Random Generator
@@ -67,32 +45,32 @@ random_gen = np.random.RandomState(a)
 ### Step 1:: Create a quantum state
 ## A GHZ state
 rho = np.zeros((2**N,2**N))
-rho[0,0] = 1.
-#rho[-1,-1] = 1./2
-#rho[-1,0] = 1./2
-#rho[0,-1] = 1./2
+rho[0,0] = 1./2
+rho[-1,-1] = 1./2
+rho[-1,0] = 1./2
+rho[0,-1] = 1./2
 ### Or a qutip random density matrix combined with a pure product state qubit
-import qutip
-rho = qutip.tensor(qutip.rand_dm(2**(N-1),pure=True),qutip.basis(2,0)*qutip.basis(2,0).dag()).data.todense()
+#import qutip
+#rho = qutip.tensor(qutip.rand_dm(2**(N-1),pure=True),qutip.basis(2,0)*qutip.basis(2,0).dag()).data.todense()
 
 ## Optional: calculate exact purities with Qutip partial trace function
-rhoQ = qutip.Qobj(rho,dims=[ [2]*N,[2]*N] )
-print('Exact Purities')
-for p in Partition_string:
-    if p=='1'*N:
-        print('Partition ',p, ":", (rhoQ*rhoQ).tr())
-    else:
-        rhop = rhoQ.ptrace([i for i in range(N) if p[i]=='1'])
-        print('Partition ',p, ":", (rhop*rhop).tr())
+#rhoQ = qutip.Qobj(rho,dims=[ [2]*N,[2]*N] )
+#print('Exact Purities')
+#for p in Partition_string:
+#    if p=='1'*N:
+#        print('Partition ',p, ":", (rhoQ*rhoQ).tr())
+#    else:
+#        rhop = rhoQ.ptrace([i for i in range(N) if p[i]=='1'])
+#        print('Partition ',p, ":", (rhop*rhop).tr())
 
 ### Step 2:: Perform randomized measurements
 path_info = np.einsum_path('ab,bc,ac->a',rho,rho,rho,optimize='greedy')
 Meas_Data = np.zeros((Nu,NM),dtype=int)  # Meas_data will store the measured bit strings (NM per random unitary)
 for iu in range(Nu):
         #Construct random unitary as a product of single qubit rotations
-        Unitary = SingleQubitRotation(random_gen,mode)
+        Unitary = SingleQubitRotation_CUE(random_gen)
         for i in range(1,N):
-            Unitary = np.kron(Unitary,SingleQubitRotation(random_gen,mode))
+            Unitary = np.kron(Unitary,SingleQubitRotation_CUE(random_gen))
 
         #Apply on state and compute bitstrings probabilities
         Prob_bitstrings = np.real(np.einsum('ab,bc,ac->a',Unitary,rho,np.conj(Unitary),optimize=path_info[0]))
@@ -108,7 +86,7 @@ Partition = np.array([int(p,2) for p in Partition_string])
 nbp = len(Partition) #Number of partitions to analyze
 # Convert each partition in 'qubit' representation
 Partition = np.unpackbits(np.array(Partition, dtype=">i2").view(np.uint8)).reshape((nbp,16))[:,-N:]
-Purity = np.zeros(nbp)
+Purity = np.zeros(N)
 Hist_Hamming_Distances = np.zeros((N+1,nbp)) #Array use for storage
 
 path_info = np.einsum_path('ac,c->a',np.zeros((NM,N)), np.zeros(N),optimize='greedy')
