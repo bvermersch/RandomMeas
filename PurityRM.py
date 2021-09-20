@@ -55,7 +55,7 @@ if (N>16):
     print('Please reduce N (or adapt the call to np.unpackbits)')
 Nu = 2000 # Number of random unitaries to be used
 NM = 200 # Number of projective measurements (shots) per random unitary
-mode = 'CUE'
+mode = 'xyz'
 Partition_string = ['1'*x +'0'*(N-x) for x in range(1,N+1)] ## List of partitions for which we want to extract the purity (ex: '100000..' only the first spin)
 Partition_string = [ '0'*x+'1'+'0'*(N-x-1) for x in range(N)]
 Partition_string += [ '1'*N ]
