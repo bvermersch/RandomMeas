@@ -22,28 +22,20 @@ import random
 import numpy as np
 from scipy import linalg
 
-def SingleQubitRotation_CUE(random_gen): #Generate a 2x2 CUE matrix (ref: http://www.ams.org/notices/200705/fea-mezzadri-web.pdf)
-    U = (random_gen.randn(2,2)+1j*random_gen.randn(2,2))/np.sqrt(2)
-    q,r = linalg.qr(U)
-    d = np.diagonal(r)
-    ph = d/np.absolute(d)
-    U = np.multiply(q,ph,q)
-    return U
-
 def SingleQubitRotation_Pauli(random_gen): #Generate a 2x2 CUE matrix (ref: http://www.ams.org/notices/200705/fea-mezzadri-web.pdf)
-    r = rand()
+    r = random_gen.rand()
     u = 1j*np.zeros((2,2))
-    if r<=1./3:
+    if r <= 1./3:
         u[0,0] = 1
         u[0,1] = 1
         u[1,0] = 1
-        u[1,1] = 1
+        u[1,1] = -1
         u *= 1./np.sqrt(2)
     elif r<= 2./3:
         u[0,0] = 1
-        u[0,1] = 1
-        u[1,0] = 1j
-        u[1,1] = -1j
+        u[0,1] = -1j
+        u[1,0] = 1
+        u[1,1] = 1j
         u *= 1./np.sqrt(2)
     else:
         u = np.eye(2) 
@@ -88,9 +80,9 @@ path_info = np.einsum_path('ab,bc,ac->a',rho,rho,rho,optimize='greedy')
 Meas_Data = np.zeros((Nu,NM),dtype=int)  # Meas_data will store the measured bit strings (NM per random unitary)
 for iu in range(Nu):
         #Construct random unitary as a product of single qubit rotations
-        Unitary = SingleQubitRotation_CUE(random_gen)
+        Unitary = SingleQubitRotation_Pauli(random_gen)
         for i in range(1,N):
-            Unitary = np.kron(Unitary,SingleQubitRotation_CUE(random_gen))
+            Unitary = np.kron(Unitary,SingleQubitRotation_Pauli(random_gen))
 
         #Apply on state and compute bitstrings probabilities
         Prob_bitstrings = np.real(np.einsum('ab,bc,ac->a',Unitary,rho,np.conj(Unitary),optimize=path_info[0]))
