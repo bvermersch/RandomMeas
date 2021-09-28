@@ -5,6 +5,8 @@ Codes to reconstruct the purity and state-fidelities of artifically generated ra
 
 Here I present a GHZ tutorial [GHZ](Tutorial_GHZ.md)
 
+I switched to dev branch
+
 <img src="https://render.githubusercontent.com/render/math?math=e^{i \pi} = -1">
 
 
