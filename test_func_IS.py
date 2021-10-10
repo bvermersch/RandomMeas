@@ -38,7 +38,7 @@ def  countSetBits(n):
         n >>= 1
     return count 
 
-N = 16  
+N = 20  
 d = 2**N
 p2 = 1
 p = 0
@@ -185,12 +185,12 @@ def metropolis_sampling(NN, n_samples, burn_in):
 
 ### step 2: Sampling of the unitaries from the ideal state 
 ## initialize randomized measurment parameters
-nu = 50 #number of unitaries to be used 
-nm = 100000# number of readout measurements per unitary
+nu = 10 #number of unitaries to be used 
+nm = 1000000# number of readout measurements per unitary
 burn_in = 1 # number of burn_in samples: nu*burn_in 
 nu_tot = nu + nu*burn_in # total number of unitaries (including burn_in)
 
-exp = 20
+exp = 10
 Error_is = np.zeros(exp)
 Error_uni = np.zeros(exp)
 for exps in range(exp):
