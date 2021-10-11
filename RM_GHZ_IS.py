@@ -20,7 +20,7 @@ def RZ(angle2):
                      [0, np.exp(1j * angle2 / 2)]], dims = [[2],[2]])
 
 
-N = 5 ## Number of qubits
+N = 16 ## Number of qubits
 d = 2**N ## Hilbert space dimension
 
 ### Initializing the pure GHZ state 
@@ -30,7 +30,7 @@ psi[-1] = (1/2)**(0.5)
 psi_tens = np.reshape(psi, [2]*N)
 
 # Consider realizing a noisy version of the GHZ state experimentally. Noise given by depolarization noise strength p
-p_depo = 0.75
+p_depo = 0.15
 
 ## Theoritical purity esitmates:
 p2_exp = (1-p_depo)**2 + (1-(1-p_depo)**2)/d ## purity of the realized noisy GHZ state
@@ -91,6 +91,7 @@ def Get_angles_IS(NN, num_nu, burn_in):
     
     accept = 0
     
+    
     ## initializing the first set of 2N angles (theta & phi) sampled uniformly
     angles_0 = random_gen.uniform(0,1,(2*NN,1))
     
@@ -99,6 +100,7 @@ def Get_angles_IS(NN, num_nu, burn_in):
     
     while (accept < num_nu+num_nu*burn_in):
         count += 1
+        print('metropolis sampling {:d} % \r'.format(int(100*accept/(num_nu+num_nu*burn_in))),end = "",flush=True)
         
         ## generating 2N angles (theta & phi) of the candidate unitary by sampling uniformly
         angles_candidate = random_gen.uniform(0,1,(2*NN,1))
@@ -122,6 +124,7 @@ def Get_angles_IS(NN, num_nu, burn_in):
         ## append the obtained unitary angles and the corresponding weight function X_is for each u
         samples = np.append(samples, np.array([angles_0[:,0]]), axis = 0)        
         X_theory = np.append(X_theory, np.array(X0), axis = 0)
+    print('\n')
     
 
     nu_tot = num_nu + num_nu*burn_in # total number of unitaries (including burn_in)
@@ -187,8 +190,8 @@ def get_X_unbiased(meas_data, NN, num_nm):
 
 ### step 2: Sampling of the unitaries from the ideal state 
 ## initialize randomized measurment parameters
-nu = 10  ## number of unitaries to be used 
-nm = 100 ## number of readout measurements per unitary
+nu = 100  ## number of unitaries to be used 
+nm = 10*d ## number of readout measurements per unitary
 burn_in = 1 # number of burn_in samples: nu*burn_in 
 nu_tot = nu + nu*burn_in # total number of unitaries (including burn_in)
 
@@ -203,14 +206,22 @@ theta_is, phi_is, n_r, N_s, p_IS = Get_angles_IS(N, nu, burn_in)
 
 ### Step 2: Perform Randomized measurements classically to get bit string data 
 ## This step can be replaced by the actual experimentally recorded bit strings for the applied unitaries
+
+Meas_Data_uni = np.zeros((nu,nm),dtype='int64')
+Meas_Data_IS = np.zeros((nu,nm),dtype='int64')
+for iu in range(nu):
+    print('Data acquisition {:d} % \r'.format(int(100*iu/(nu))),end = "",flush=True)
+    Meas_Data_uni[iu,:] = Random_Meas(N, nm, theta_uni[:,iu], phi_uni[:,iu])
+    Meas_Data_IS[iu,:] = Random_Meas(N, nm, theta_is[:,iu], phi_is[:,iu])
+
+print('\n loaded\n ')
+
 X_uni = np.zeros(nu)
 X_is = np.zeros(nu)
-
 for iu in range(nu):
-    Meas_Data_Uni = Random_Meas(N, nm, theta_uni[:,iu], phi_uni[:,iu])
-    Meas_Data_IS = Random_Meas(N, nm, theta_is[:,iu], phi_is[:,iu])
-    X_uni[iu] = get_X_unbiased(Meas_Data_Uni,N,nm)
-    X_is[iu] = get_X_unbiased(Meas_Data_IS,N,nm)
+    print('Postprocessing {:d} % \r'.format(int(100*iu/(nu))),end = "",flush=True)
+    X_uni[iu] = get_X_unbiased(Meas_Data_uni[iu,:],N,nm)
+    X_is[iu] = get_X_unbiased(Meas_Data_IS[iu,:],N,nm)
     
 print("Measurement data loaded")    
 
