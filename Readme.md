@@ -3,7 +3,7 @@ Codes to reconstruct the purity and state-fidelities of artifically generated ra
 - Realize a quantum state in a qubit system
 - Apply Nu random unitaries made of single qubit rotations, measure for each unitary NM bitstrings.
 
-Here I present a GHZ tutorial [GHZ](Tutorial_GHZ.md)
+Importance sampling tutorial for GHZ states [GHZ](Tutorial_GHZ.md)
 
 I switched to dev branch
 
