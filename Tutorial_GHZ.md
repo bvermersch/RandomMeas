@@ -1,6 +1,6 @@
 # Illustration of importance sampling for GHZ states
 
-The script evaluates the purity of noisy GHZ states by performing importance sampling of the random unitaries from the ideal pure GHZ state as proposed in https://arxiv.org/pdf/2102.13524.pdf .
+The script evaluates the purity of noisy GHZ states by performing importance sampling of the random unitaries from the ideal pure GHZ state. (https://arxiv.org/pdf/2102.13524.pdf)
 We also provide comparisons to the old protocol of uniform sampling of the random unitaries.
 
 The goal is to estimate the purity of a large N qubit noisy GHZ state prepared in a NISQ device. 
