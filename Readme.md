@@ -5,13 +5,6 @@ Codes to reconstruct the purity and state-fidelities of artifically generated ra
 
 Importance sampling tutorial for GHZ states [GHZ](GHZ_markdown.ipynb)
 
-I switched to dev branch
-
-<img src="https://render.githubusercontent.com/render/math?math=e^{i \pi} = -1">
-
-
-<img src="https://render.githubusercontent.com/render/math?math=X_{IS}=2">
-
 License: Apache 2.0
 
 First version: July 2020
