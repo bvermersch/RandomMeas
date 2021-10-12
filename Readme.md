@@ -5,6 +5,8 @@ Codes to reconstruct the purity and state-fidelities of artifically generated ra
 
 Importance sampling tutorial for GHZ states [GHZ](GHZ_markdown.ipynb)
 
+<img src="https://render.githubusercontent.com/render/math?math=X_e(u^{(r)}) = \frac{2^N}{N_M(N_M-1)} \sum_{m \neq m'} (-2) ^{-D[s_m^{(r)},s^{(r)}_{m'}]}">
+
 License: Apache 2.0
 
 First version: July 2020
