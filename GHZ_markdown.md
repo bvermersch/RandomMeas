@@ -16,7 +16,7 @@ $\rho(p_{depo}) = (1-p_{depo})|\mathrm{GHZ}_N><\mathrm{GHZ}_N| + p_{depo}\,\math
     
 -> The purity ${[p_2]}_{IS}$ is computed as a weighted average over the applied unitaries  given by:
 
-<img src="https://render.githubusercontent.com/render/math?math="[p_2]_\mathrm{IS} = \frac{ 1}{N_s} \sum_{r = 1}^{N_u} \frac{n^{(r)} X_e(u^{(r)}) }{p_\mathrm{IS}(u^{(r)})}$">
+<img src="https://render.githubusercontent.com/render/math?math="[p_2]_\mathrm{IS} = \frac{ 1}{N_s} \sum_{r = 1}^{N_u} \frac{n^{(r)} X_e(u^{(r)}) }{p_\mathrm{IS}(u^{(r)})}">
    
    where $N_s$ is the total number of unitaries $u$ collected by the metropolis algorithm which contains $N_u$ distinct ones and $n^{(r)}$ takes into account the occurence of each of unitary $u^{(r)}$ of the $N_u$ distinct samples and satisfies $N_s=\sum_r n^{(r)}$.
    
