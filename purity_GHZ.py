@@ -31,6 +31,7 @@ GHZ[-1] = (1/2)**(0.5)
 GHZ_state = np.reshape(GHZ, [2]*N)
 #mode = 'pure'
 
+### Importance sampling provides best performances for nu ~ O(N) and nm ~O(2^N) !!
 nu = 50 # number of unitaries to be used
 nm = d*10 # number of measurements to be performed for each unitary
 burn_in = 1 # determines the number of samples to be rejected during metropolis: (nu*burn_in) 
