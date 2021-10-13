@@ -13,11 +13,11 @@ random_gen = np.random.RandomState(a)
 ### This script estimates the purity of a noisy GHZ realized in the experiment using uniform sampling and importance sampling from an ideal pure GHZ state
 ### Capable of simulating noisy GHZ state till N = 25 qubits !!!
 
-N = 15 ## Number of qubits of the GHZ state
+N = 16 ## Number of qubits of the GHZ state
 d = 2**N ## Hilbert space dimension
 
 # Consider realizing a noisy version of the GHZ state experimentally. Noise given by depolarization noise strength p_depo
-p_depo = 0.75
+p_depo = 0.25
 
 ## Theoretical purity esitmates:
 p2_exp = (1-p_depo)**2 + (1-(1-p_depo)**2)/d ## purity of the realized noisy GHZ state
@@ -33,7 +33,7 @@ GHZ_state = np.reshape(GHZ, [2]*N)
 
 ### Importance sampling provides best performances for nu ~ O(N) and nm ~O(2^N) !!
 nu = 50 # number of unitaries to be used
-nm = d*10 # number of measurements to be performed for each unitary
+nm = d*4 # number of measurements to be performed for each unitary
 burn_in = 1 # determines the number of samples to be rejected during metropolis: (nu*burn_in) 
 
 ### Step 1: Sample Y and Z rotation angles (2N angles for each unitary u)  
