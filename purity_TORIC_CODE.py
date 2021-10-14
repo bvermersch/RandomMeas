@@ -16,12 +16,6 @@ N = 9 ## total number of qubits of the state in study
 d = 2**N ## Hilbert space dimension
 
 
-## Theoretical purity esitmates:
-#p2_exp = (1-p_depo)**2 + (1-(1-p_depo)**2)/d ## purity of the realized noisy GHZ state
-#p2_theory = 1 ## Purity of the ideal pure GHZ state
-#fid = (1-p_depo) + p_depo/d ## Fidelity between the ideal and the experimenetal GHZ state
-
-
 ## returns the state rho for the considered partition 
 def sub_system(part):
     rho = np.load("N_9_sites_7_11_17_12_16_20_15_21_25.npy") 
@@ -116,15 +110,15 @@ S_topo_uni = -1*(np.sum(np.log2(p2_subsystems_uni)[0:3])-(np.sum(np.log2(p2_subs
 S_topo_IS = -1*(np.sum(np.log2(p2_subsystems_IS)[0:3])-(np.sum(np.log2(p2_subsystems_IS)[3:6])) + np.log2(p2_subsystems_IS[6]))
 
 ## some performace summaries and results
-## total number of meaurements giving the number of times the concerned state was prepared in the experiment to measure S_topo
-## 
+## total number of meaurements that gives the number of times the concerned state was prepared in the experiment
+ 
 print('Total number of uniform measurements used: ', nu_uni*nm_uni)
 
 ## total number of importance sampling measurements is given by the sum of 4 different runs of the experiment 
-## run(1) partition[0] and its complement
-## run(2) partition[1] and its complement
-## run(3) partition[2] and its complement
-## run(4) the whole state
+## run(1): Evaluates the purity of partition[0] and its complement
+## run(2): Evaluates the purity of partition[1] and its complement
+## run(3): Evalautes the purity of partition[2] and its complement
+## run(4): Evalautes the purity of the whole state (9 qubits)
 print('Total number of IS measurements used: ', 3*nu_IS[3]*nm_IS[3] + nu_IS[6]*nm_IS[6])
 
 print('True value of S_topo: ', -1)
@@ -133,14 +127,3 @@ print('S_topo (Importance sampling) = ', S_topo_IS)
 print ('Error uniform: ', np.round(100*(np.abs(S_topo_uni+1)),2), '%')
 print ('Error IS: ', np.round(100*(np.abs(S_topo_IS+1)),2), '%')
 
-
-"""
-print(S_topo_uni)
-print(S_topo_IS)
-print('Fidelity of the sampler: ', np.round(100*fid,2), '%')
-print('p2 (True value) = ', p2_exp)
-print('p2 (uniform sampling) = ', p2_uni)
-print('p2 (Importance sampling) = ', p2_IS)
-print ('Error uniform: ', np.round(100*(np.abs(p2_uni-p2_exp)/p2_exp),2), '%')
-print ('Error IS: ', np.round(100*(np.abs(p2_IS-p2_exp)/p2_exp),2), '%')
-"""
