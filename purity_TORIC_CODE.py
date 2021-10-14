@@ -116,8 +116,9 @@ S_topo_uni = -1*(np.sum(np.log2(p2_subsystems_uni)[0:3])-(np.sum(np.log2(p2_subs
 S_topo_IS = -1*(np.sum(np.log2(p2_subsystems_IS)[0:3])-(np.sum(np.log2(p2_subsystems_IS)[3:6])) + np.log2(p2_subsystems_IS[6]))
 
 ## some performace summaries and results
-## total number of meaurements giving the numbe of times the concerned state was prepared in the experiment
-print('Total umber of uniform measurements used: ', nu_uni*nm_uni)
+## total number of meaurements giving the number of times the concerned state was prepared in the experiment to measure S_topo
+## 
+print('Total number of uniform measurements used: ', nu_uni*nm_uni)
 
 ## total number of importance sampling measurements is given by the sum of 4 different runs of the experiment 
 ## run(1) partition[0] and its complement
