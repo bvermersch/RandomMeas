@@ -1,8 +1,7 @@
 # RandomMeas: Python Interface to Random Measurements
 
 This repository offer scripts to reconstruct the purity and cross-platform fidelities from randomized measurements.
-![RandomMeas](Pics/RandomMeasurements.png) 
-<img src="Pics/RandomMeasurements.png" alt="drawing" width="50"/>
+<img src="Pics/RandomMeasurements.png" alt="drawing" width="200"/>
 
 ## Purity from randomized measurement
 The purity is reconstructed from statistical correlations between randomized measurements, which are obtained via random single qubit gates
