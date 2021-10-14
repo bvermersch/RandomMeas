@@ -2,6 +2,7 @@
 
 This repository offer scripts to reconstruct the purity and cross-platform fidelities from randomized measurements.
 ![RandomMeas](Pics/RandomMeasurements.png) 
+<img src="Pics/RandomMeasurements.png" alt="drawing" width="50"/>
 
 ## Purity from randomized measurement
 The purity is reconstructed from statistical correlations between randomized measurements, which are obtained via random single qubit gates
@@ -13,7 +14,7 @@ The purity is reconstructed from statistical correlations between randomized mea
 ## Fidelities from randomized measurement
 The fidelity between quantum states realized on two different quantum devices is obtained by cross-correlating randomized measurements.
 
-+ [Original Paper](https://journals.aps.org/prl    /abstract/10.1103/PhysRevLett.124.010504)
++ [Original Paper](https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.124.010504)
 + [Python Script](FidelityRM.py)
 + Typical use: Up to 10 qubits
 
