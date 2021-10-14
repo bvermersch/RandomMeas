@@ -1,4 +1,4 @@
-#   Copyright 2020 Benoit Vermersch, Andreas Elben
+#   Copyright 2020 Benoit Vermersch, Andreas Elben, Aniket Rath
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -50,12 +50,12 @@ def SingleQubitRotation(random_gen,mode):
     return U
 
 ## Parameters
-N = 3 # Number of qubits to analyze (necessary <= 16 for the present code due to the use of the function np.unpackbits)
+N = 8 # Number of qubits to analyze (necessary <= 16 for the present code due to the use of the function np.unpackbits)
 if (N>16):
     print('Please reduce N (or adapt the call to np.unpackbits)')
-Nu = 2000 # Number of random unitaries to be used
-NM = 200 # Number of projective measurements (shots) per random unitary
-mode = 'xyz'
+Nu = 1000 # Number of random unitaries to be used
+NM = 100 # Number of projective measurements (shots) per random unitary
+mode = 'CUE'
 Partition_string = ['1'*x +'0'*(N-x) for x in range(1,N+1)] ## List of partitions for which we want to extract the purity (ex: '100000..' only the first spin)
 Partition_string = [ '0'*x+'1'+'0'*(N-x-1) for x in range(N)]
 Partition_string += [ '1'*N ]
@@ -67,15 +67,15 @@ random_gen = np.random.RandomState(a)
 ### Step 1:: Create a quantum state
 ## A GHZ state
 rho = np.zeros((2**N,2**N))
-rho[0,0] = 1.
-#rho[-1,-1] = 1./2
-#rho[-1,0] = 1./2
-#rho[0,-1] = 1./2
+rho[0,0] = 1./2
+rho[-1,-1] = 1./2
+rho[-1,0] = 1./2
+rho[0,-1] = 1./2
 ### Or a qutip random density matrix combined with a pure product state qubit
-import qutip
-rho = qutip.tensor(qutip.rand_dm(2**(N-1),pure=True),qutip.basis(2,0)*qutip.basis(2,0).dag()).data.todense()
+#rho = qutip.tensor(qutip.rand_dm(2**(N-1),pure=True),qutip.basis(2,0)*qutip.basis(2,0).dag()).data.todense()
 
 ## Optional: calculate exact purities with Qutip partial trace function
+import qutip
 rhoQ = qutip.Qobj(rho,dims=[ [2]*N,[2]*N] )
 print('Exact Purities')
 for p in Partition_string:
