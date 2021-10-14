@@ -1,12 +1,31 @@
-Codes to reconstruct the purity and state-fidelities of artifically generated randomized measurement data of a N qubit system (https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.120.050406,https://science.sciencemag.org/content/364/6437/|, https://journals.aps.org/pra/abstract/10.1103/PhysRevA.99.052323,https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.124.010504 ).
+# RandomMeas: Python Interface to random measurements
 
-- Realize a quantum state in a qubit system
-- Apply Nu random unitaries made of single qubit rotations, measure for each unitary NM bitstrings.
+We provide scripts to reconstruct the purity and cross-platform fidelities from randomized measurements.
+<img src="Pics/RandomMeasurements.png" alt="drawing" width="250"/>
 
-Importance sampling tutorial for GHZ states [GHZ](GHZ_markdown.ipynb)
+## Purity from randomized measurements
+The purity is reconstructed from statistical correlations between randomized measurements, which are obtained via random single qubit gates
 
-<img src="https://render.githubusercontent.com/render/math?math=X_e(u^{(r)}) = \frac{2^N}{N_M(N_M-1)} \sum_{m \neq m'} (-2) ^{-D[s_m^{(r)},s^{(r)}_{m'}]}">
++ [Original Paper](https://science.sciencemag.org/content/364/6437)
++ [Python Script](PurityRM.py)
++ Typical use: Up to 10 qubits
+
+## Fidelities from randomized measurements
+The fidelity between quantum states realized on two different quantum devices is obtained by cross-correlating randomized measurements.
+
++ [Original Paper](https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.124.010504)
++ [Python Script](FidelityRM.py)
++ Typical use: Up to 10 qubits
+
+## Purity from importance sampling of randomized measurements
+The purity is obtained with exponentially less measurements compared to the standard approach of uniform sampling. This is based on importance sampling of random single qubit unitaries, with respect to an approximation of the quantum state.
+
++ [Original Paper](https://arxiv.org/abs/2102.13524)
++ [Tutorial](TutorialImportanceSampling.ipynb)
++ [Python Script](PurityImportanceSampling.py)
++ Typical use: Up to 24 qubits
+
 
 License: Apache 2.0
 
-First version: July 2020
+Second version: Oct 2021
