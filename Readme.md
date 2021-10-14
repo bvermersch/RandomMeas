@@ -29,7 +29,7 @@ The purity is obtained with exponentially less measurements compared to the stan
 The topological entanglement entropy "S_topo" is obtained with an order of magnitude less measurements compared to the standard approach of uniform sampling using  importance sampling of random single qubit unitaries, with respect to the modelled approximation of the quantum state.
 
 + [Original Paper](https://arxiv.org/pdf/2104.01180.pdf)
-+ [Python Script](Purity_TORIC_CODE.py)
++ [Python Script](purity_TORIC_CODE.py)
 + Typical use: Up to 15 qubits
 
 
