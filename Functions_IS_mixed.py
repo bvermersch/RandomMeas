@@ -192,7 +192,22 @@ def Random_Meas(NN, state, num_nm, var_theta, var_phi):
         
     return bit_strings 
      
-def get_X_unbiased(meas_data, NN, num_nm):
+def get_X_unbiased(meas_data, NN,Ntot,num_nm):
+
+    ein_command = alphabet[0:NN]
+    for ii in range(NN):
+        ein_command += ','
+        ein_command += alphabet[ii]+alphabet_cap[ii]
+    ein_command += ','+ alphabet_cap[0:NN]
+    
+    probbe = np.bincount(meas_data,minlength=2**NN)
+    probe_tens = np.reshape(probbe, [2]*NN)
+    Liste = [probe_tens] + [hamming_array]*NN + [probe_tens]
+    XX_e = np.einsum(ein_command, *Liste, optimize = True)*2**NN/(num_nm*(num_nm-1)) - 2**NN/(num_nm-1)
+    return XX_e
+
+def get_X_unbiased_SubSystem(meas_data, NN, subsystem,num_nm):
+
     ein_command = alphabet[0:NN]
     for ii in range(NN):
         ein_command += ','
