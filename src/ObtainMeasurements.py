@@ -71,6 +71,16 @@ def Simulate_Meas_pseudopure(NN, psi, p, NM, u):
     return bit_strings 
 
 def Simulate_Meas_mixed(N, rho, NM, u):
+    prob_tensor = rho.reshape(tuple([2] * (2*N)),order='C')
+    for n in range(N):
+        prob_tensor = np.einsum(u[n], [2*N, n], prob_tensor, list(range(N))+list(range(n+N,2*N)), np.conjugate(u[n]), [2*N,N+n], list(range(n)) + [2*N] + list(range(n + 1, N)) + list(range(N+n+1,2*N)))
+    prob= np.real(prob_tensor.reshape(2**N))
+    prob /= sum(prob)
+    #Sample NM measurements according to the bitstrings probabilities
+    bit_strings = random_gen.choice(range(2**N),p=prob,size=NM)
+    return bit_strings
+
+def Simulate_Meas_mixed_old(N, rho, NM, u):
         Unitary = u[0]
         for i in range(1,N):
             Unitary = np.kron(Unitary,u[i])
