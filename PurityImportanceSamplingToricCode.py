@@ -4,6 +4,11 @@ import cmath
 from qutip import *
 import random 
 from scipy import linalg
+import sys
+sys.path.append("src")
+from ObtainMeasurements import *
+from AnalyzeMeasurements import *
+from PreprocessingImportanceSampling import *
 from Functions_IS_mixed import *
 
 ### Initiate Random Generator
@@ -15,10 +20,11 @@ random_gen = np.random.RandomState(a)
 N = 9 ## total number of qubits of the state in study
 d = 2**N ## Hilbert space dimension
 
+## load the toric code state:
+rho = np.load("N_9_sites_7_11_17_12_16_20_15_21_25.npy") 
 
 ## returns the state rho for the considered partition 
-def sub_system(part):
-    rho = np.load("N_9_sites_7_11_17_12_16_20_15_21_25.npy") 
+def sub_system(rho,part):
     rho = Qobj(rho, [[2]*N,[2]*N])
     if (len(part) == 9):
         rho_traced = rho
@@ -28,109 +34,108 @@ def sub_system(part):
 
 ## Partitions considered indexed by the qubit numbers of the 9 qubit sub-system
 qubit_partitions = [[0,1,5],[2,3,7],[3,6,8],[0,1,2,3,5,7],[0,1,4,5,6,8],[2,3,4,6,7,8],[0,1,2,3,4,5,6,7,8]] ## indexed by thhe respective qubit numbers 
+Traced_systems = [[2,3,4,6,7,8],[0,1,2,4,5,7],[0,1,2,4,5,7],[4,6,8],[2,3,7],[0,1,5],[]] ## qubit indices that are traced out for each sub-system
 num_partitions = len(qubit_partitions) ## total number of partitions
 
 
-nu_uni = 1000 ## number of unitaries used for uniform sampling
-nm_uni = 10000 ## number of measurements performed for each uniformly sampled unitary
+Nu_uni = 1000 ## number of unitaries used for uniform sampling
+NM_uni = 10000 ## number of measurements performed for each uniformly sampled unitary
 
 ## could tune these values for each partition of the state. Partitions ordered as given in 'qubit_partitions'
-nu_IS = [5]*6 +[35] ## number of unitaries used for importance sampling for each partition
-nm_IS = [100000]*6 + [100000] ## number of measurements done for each importance sampled unitary for each partition
+Nu_IS = [5]*6 +[35] ## number of unitaries used for importance sampling for each partition
+NM_IS = [100000]*6 + [100000] ## number of measurements done for each importance sampled unitary for each partition
 burn_in = 1
+mode = 'CUE'
 
 # Could consider realizing a noisy version ofthe state experimentally. Noise given by depolarization noise strength p_depo
 p_depo = 0
 
-print('Evalaution of S_topo using importance sampling in the regime N_M >> N_u \n ')
 
+print('Evalaution of S_topo using uniform sampling with Nu = '+str(Nu_uni)+' and NM = '+str(NM_uni)+' \n ')
 ## storing purities for each partitions
 p2_subsystems_IS = np.zeros(num_partitions)
 p2_subsystems_uni = np.zeros(num_partitions)
 p2_theory = np.zeros(num_partitions)
-p2_exp = np.zeros(num_partitions)
 
+
+### Perform randomized measurements with uniform sampling
+
+Meas_Data_uni = np.zeros((Nu_uni,NM_uni),dtype='int64')
+u = [0]*N
+for iu in range(Nu_uni):
+    print('Data acquisition {:d} % \r'.format(int(100*iu/(Nu_uni))),end = "",flush=True)
+    for iq in range(N):
+        u[iq] = SingleQubitRotation(random_gen,mode)
+    Meas_Data_uni[iu,:] = Simulate_Meas_mixed(N, rho, NM_uni, u)
+print('Measurement data generated for uniform sampling')
+
+### Reconstruct purities from measured bitstrings
+
+X = np.zeros((Nu_uni,len(qubit_partitions)))
+for iu in range(Nu_uni):
+    print('PostProcessing {:d} % \r'.format(int(100*iu/(Nu_uni))),end = "",flush=True)
+    prob = get_prob(Meas_Data_uni[iu,:],N)
+    for i_part in range(len(qubit_partitions)):
+        prob_subsystem = reduce_prob(prob,N,Traced_systems[i_part])
+        X[iu,i_part] = get_X(prob_subsystem,len(qubit_partitions[i_part]),NM_uni)
+p2_subsystems_uni = np.mean(X,0)
+
+## Evalauting purities with importance sampling
 
 for iparts in range(num_partitions):
-    print('Evaluating purity of the sub-system indexed by the qubit numbers' + str(qubit_partitions[iparts]))
+    print('Evaluating Importance sampled purity of the sub-system ' + str(qubit_partitions[iparts])+ ' with Nu = '+str(Nu_IS[iparts])+' and NM = '+str(NM_IS[iparts])+' \n ')
     
     N_subsystem = len(qubit_partitions[iparts]) ## number of qubits of the sub-system under study
     d_subsystem = 2**N_subsystem ## Hilbert space dimension
-    rho_theory = np.array(sub_system(qubit_partitions[iparts])) ## theoretical state modeling the state realized in the experiment
-    rho_exp = (1-p_depo)*rho_theory + p_depo*np.ones((d_subsystem,d_subsystem)) ## could be a noisy version of the state
+    rho_subsystem = np.array(sub_system(rho,qubit_partitions[iparts])) ## theoretical state modeling the state realized in the experiment
+    
     
     ## Theoretical purity esitmates for each concerned partition:
-    p2_theory[iparts] = np.real(np.trace(np.dot(rho_theory,rho_theory)))
-    p2_exp[iparts] = np.real(np.trace(np.dot(rho_exp,rho_exp)))
+    p2_theory[iparts] = np.real(np.trace(np.dot(rho_subsystem,rho_subsystem)))
+    
+    ### Step 1: Preprocessing for importance sampling
 
-Meas_Data_uni = np.zeros((nu_uni,nm_uni),dtype='int64')
-theta_uni, phi_uni = Get_angles_uniform(N_subsystem, nu_uni) ## gives uniformly sampled angles 
-for iu in range(nu_uni):
-        print('Data acquisition {:d} % \r'.format(int(100*iu/(nu_uni))),end = "",flush=True)
-        # uniformly sampled angles for the Y rotation (theta_uni) and Z rotation (phi_uni)
-        Meas_Data_uni[iu,:] = Random_Meas(N, rho_exp,nm_uni, theta_uni[:,iu], phi_uni[:,iu])
+    # Importance sampling of the angles (theta_is) and (phi_is) using metropolis algorithm of the concerned system
+    theta_is, phi_is, n_r, N_s, p_IS = MetropolisSampling_mixed(N_subsystem, rho_subsystem,Nu_IS[iparts], burn_in) 
 
-X_uni = np.zeros((nu_uni,num_partitions))
-for iu in range(nu_uni):
-    print('Postprocessing partition {:d} {:d} % \r'.format(iparts,int(100*iu/(nu_uni))),end = "",flush=True)
-    Meas_iu  = np.array(Meas_Data_uni[iu,:],dtype=">i2").view(np.uint8)
-    #Meas_unpacked = np.unpackbits(Meas_iu).reshape((nm_uni,16))[:,-N:]
-    for iparts in range(num_partitions):
-        partition = sum([2**i for i in qubit_partitions[iparts]])
-        #N_subsystem = len(qubit_partitions[iparts]) ## number of qubits of the sub-system under study
-        #Meas_SubSystem_unpacked = Meas_unpacked[:,qubit_partitions[iparts]]
-        Meas_SubSystem = np.bitwise_and(Meas_iu,partition)
-        X_uni[iu,iparts] = get_X_unbiased(Meas_SubSystem,N_subsystem,nm_uni)
-p2_subsystems_uni = np.real(np.mean(X_uni,0))
-
-
-for iparts in range(num_partitions):
+    ## Perform randomized measurements with the generated the importance sampled unitaries
+    u = [0]*N
+    Meas_Data_IS = np.zeros((Nu_IS[iparts],NM_IS[iparts]),dtype='int64')
+    for iu in range(Nu_IS[iparts]):
+        print('Data acquisition {:d} % \r'.format(int(100*iu/(Nu_IS[iparts]))),end = "",flush=True)
+        for iq in range(N_subsystem):
+            u[iq] = SingleQubitRotationIS(theta_is[iq,iu],phi_is[iq,iu])
+        Meas_Data_IS[iu,:] = Simulate_Meas_mixed(N_subsystem, rho_subsystem, NM_IS[iparts], u)
+    print('Measurement data generated for importance sampling \n')
     
-    ### Step 1: Sample Y and Z rotation angles   
-    
-    
-    # Importance sampling of the angles (theta_is) and (phi_is) using metropolis algorithm from a pure GHZ state
-    theta_is, phi_is, n_r, N_s, p_IS = Get_angles_IS(N_subsystem, rho_theory,nu_IS[iparts], burn_in) 
-    
-    ### Step 2: Perform Randomized measurements classically to get bit string data 
-    
-    ## This step can be replaced by the actual experimentally recorded bit strings for the applied unitaries
-    Meas_Data_IS = np.zeros((nu_IS[iparts],nm_IS[iparts]),dtype='int64')
-    
-        
-    for iu in range(nu_IS[iparts]):
-        Meas_Data_IS[iu,:] = Random_Meas(N_subsystem, rho_exp,nm_IS[iparts], theta_is[:,iu], phi_is[:,iu])
-    
-    print('\n Measurement data loaded\n ')
-    
-    ## Step 3: Estimation of the purities p2_uni and p2_IS
-    
-    X_imp = np.zeros(nu_IS[iparts])
-        
-    for iu in range(nu_IS[iparts]):
-        X_imp[iu] = get_X_unbiased(Meas_Data_IS[iu,:],N_subsystem,nm_IS[iparts])
+    ## Estimation of the puritiy p2_IS
+    X_imp = np.zeros(Nu_IS[iparts])
+    for iu in range(Nu_IS[iparts]):
+        print('Postprocessing {:d} % \r'.format(int(100*iu/(Nu_IS[iparts]))),end = "",flush=True)
+        prob = get_prob(Meas_Data_IS[iu,:], N_subsystem)
+        X_imp[iu] = get_X(prob,N_subsystem,NM_IS[iparts])
     
     p2_IS = 0 # purity given by importance sampling
-    for iu in range(nu_IS[iparts]):
+    for iu in range(Nu_IS[iparts]):
         p2_IS += X_imp[iu]*n_r[iu]/p_IS[iu,0]/N_s
-    ## Purities stored for each concerned sub-systems
     p2_subsystems_IS[iparts] = np.real(p2_IS)
+
 
 ## Evaluating S_topo for both the sampling methods
 S_topo_uni = -1*(np.sum(np.log2(p2_subsystems_uni)[0:3])-(np.sum(np.log2(p2_subsystems_uni)[3:6])) + np.log2(p2_subsystems_uni[6]))
 S_topo_IS = -1*(np.sum(np.log2(p2_subsystems_IS)[0:3])-(np.sum(np.log2(p2_subsystems_IS)[3:6])) + np.log2(p2_subsystems_IS[6]))
 
-## some performace summaries and results
+## some performance summaries and results
 ## total number of meaurements that gives the number of times the concerned state was prepared in the experiment
  
-print('Total number of uniform measurements used: ', nu_uni*nm_uni)
+print('Total number of uniform measurements used: ', Nu_uni*NM_uni)
 
 ## total number of importance sampling measurements is given by the sum of 4 different runs of the experiment 
 ## run(1): Evaluates the purity of partition[0] and its complement
 ## run(2): Evaluates the purity of partition[1] and its complement
 ## run(3): Evalautes the purity of partition[2] and its complement
 ## run(4): Evalautes the purity of the whole state (9 qubits)
-print('Total number of IS measurements used: ', 3*nu_IS[3]*nm_IS[3] + nu_IS[6]*nm_IS[6])
+print('Total number of IS measurements used: ', 3*Nu_IS[0]*NM_IS[0] + Nu_IS[6]*NM_IS[6])
 
 print('True value of S_topo: ', -1)
 print('S_topo (uniform sampling) = ', S_topo_uni)
