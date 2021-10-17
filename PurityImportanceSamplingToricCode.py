@@ -98,7 +98,7 @@ for iparts in range(num_partitions):
     # Importance sampling of the angles (theta_is) and (phi_is) using metropolis algorithm of the concerned system
     theta_is, phi_is, n_r, N_s, p_IS = MetropolisSampling_mixed(N_subsystem, rho_subsystem,Nu_IS[iparts], burn_in) 
 
-    ## Perform randomized measurements with the generated the importance sampled unitaries
+    ## Perform randomized measurements with the generated importance sampled unitaries
     u = [0]*N
     Meas_Data_IS = np.zeros((Nu_IS[iparts],NM_IS[iparts]),dtype='int64')
     for iu in range(Nu_IS[iparts]):
@@ -108,7 +108,7 @@ for iparts in range(num_partitions):
         Meas_Data_IS[iu,:] = Simulate_Meas_mixed(N_subsystem, rho_subsystem, NM_IS[iparts], u)
     print('Measurement data generated for importance sampling \n')
     
-    ## Estimation of the puritiy p2_IS
+    ## Estimation of the purity p2_IS
     X_imp = np.zeros(Nu_IS[iparts])
     for iu in range(Nu_IS[iparts]):
         print('Postprocessing {:d} % \r'.format(int(100*iu/(Nu_IS[iparts]))),end = "",flush=True)

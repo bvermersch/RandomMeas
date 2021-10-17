@@ -140,7 +140,7 @@ def MetropolisSampling_pure(NN, psi, num_nu, burn_in):
         
         ## constructing the X function of the ideal state with input angles of angles_candidate
         X_cand = get_X_ideal_pure(NN,psi,angles_candidate[0:NN,:],angles_candidate[NN:2*NN,:])
-        print(X_cand)
+        
         ## choose a random number \beta uniformly in [0, 1]
         beta = 0
         beta = random_gen.uniform(0,1,1)
