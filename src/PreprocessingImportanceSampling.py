@@ -19,6 +19,10 @@ import cmath
 from qutip import *
 import random 
 from scipy import linalg
+import sys
+sys.path.append("src")
+from ObtainMeasurements import *
+from AnalyzeMeasurements import *
 
 ### Initiate Random Generator
 a = random.SystemRandom().randrange(2 ** 32 - 1) #Init Random Generator
@@ -42,76 +46,6 @@ def SingleQubitRotationIS(theta,phi):
 alphabet = "abcdefghijklmnopqsrtuvwxyz"
 alphabet_cap = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-## Randomized meaurement routine without shot noise
-## Goal is to generate the ideal function X(u) for any given state. See Eq.(1) of https://arxiv.org/pdf/2102.13524.pdf
-## Input parameters:
-##      NN: Number of qubits, rho_rm: input state to perform RM, num_nu: number of random unitaries, 
-##      var_theta: Y rotations for each qubit, var_phi: Z rotations for each qubit
-def get_X_ideal_pure(NN, psi, var_theta, var_phi):
-    XX = np.zeros((1,1))
-    Co = ''
-    for i in range(NN):
-        Co += alphabet[i]
-        Co += alphabet_cap[i]
-        Co += ','
-    Co += alphabet_cap[:NN]
-    Co += '->'
-    Co += alphabet[:NN]
-    ein_command = alphabet[0:NN]
-    for ii in range(NN):
-        ein_command += ','
-        ein_command += alphabet[ii]+alphabet_cap[ii]
-    ein_command += ','+ alphabet_cap[0:NN]
-    hamming_matrix = np.array([[1,-0.5],[-0.5,1]]) ## Hamming array for a single qubit
-    uff = [0]*NN
-    for iq in range(NN):
-        uff[iq] = SingleQubitRotationIS(np.arcsin(np.sqrt(var_theta[iq,0]))*2, 2*math.pi*var_phi[iq,0])#(RY(np.arcsin(np.sqrt(var_theta[iq,iu]))*2)*RZ(2*math.pi*var_phi[iq,iu])).full()
-    Listt = uff+[psi]
-    psiu = np.einsum(Co,*Listt,optimize = 'greedy').flatten()
-    probb = np.abs(psiu)**2
-    probb /= sum(probb)       
-    
-    prob_tens = np.zeros([2]*NN) 
-    prob_tens = np.reshape(probb, [2]*NN)
-    List = [prob_tens] + [hamming_matrix]*NN + [prob_tens]
-    XX[0,:] = np.einsum(ein_command, *List, optimize = True)*2**NN
-    return XX[0,:]
-
-def get_X_ideal_mixed(NN, rho, var_theta, var_phi):
-    XX = np.zeros((1,1))
-    Co = ''
-    for i in range(NN):
-        Co += alphabet[i]
-        Co += alphabet_cap[i]
-        Co += ','
-    Co += alphabet_cap[:NN]
-    Co += '->'
-    Co += alphabet[:NN]
-    ein_command = alphabet[0:NN]
-    for ii in range(NN):
-        ein_command += ','
-        ein_command += alphabet[ii]+alphabet_cap[ii]
-    ein_command += ','+ alphabet_cap[0:NN]
-    hamming_matrix = np.array([[1,-0.5],[-0.5,1]]) ## Hamming array for a single qubit
-    uff = [0]*NN
-    for iq in range(NN):
-        uff[iq] = SingleQubitRotationIS(np.arcsin(np.sqrt(var_theta[iq,0]))*2, 2*math.pi*var_phi[iq,0])#(RY(np.arcsin(np.sqrt(var_theta[iq,iu]))*2)*RZ(2*math.pi*var_phi[iq,iu])).full()
-    prob_tensor = rho.reshape(tuple([2] * (2*NN)),order='C')
-    for n in range(NN):
-        prob_tensor = np.einsum(uff[n], [2*NN, n], prob_tensor, list(range(NN))+list(range(n+NN,2*NN)), np.conjugate(uff[n]), [2*NN,NN+n], list(range(n)) + [2*NN] + list(range(n + 1, NN)) + list(range(NN+n+1,2*NN)))
-    probb= np.real(prob_tensor.reshape(2**NN))
-    probb /= sum(probb)
-    #Listt = uff+[psi]
-    #psiu = np.einsum(Co,*Listt,optimize = 'greedy').flatten()
-    #probb = np.abs(psiu)**2
-    #probb /= sum(probb)       
-    
-    #prob_tens = np.zeros([2]*NN) 
-    prob_tensor = np.reshape(probb, [2]*NN)
-    List = [prob_tensor] + [hamming_matrix]*NN + [prob_tensor]
-    XX[0,:] = np.einsum(ein_command, *List, optimize = True)*2**NN
-    return XX[0,:]
-
 ## provides importance sampled rotation angles along RY and RZ
 def MetropolisSampling_pure(NN, psi, num_nu, burn_in):
     ### step 1: to perform a metropolis sampling
@@ -128,8 +62,15 @@ def MetropolisSampling_pure(NN, psi, num_nu, burn_in):
     angles_0 = random_gen.uniform(0,1,(2*NN,1))
     
     ## constructing the X function of the ideal state with input angles of angles_0 
-    X0 = get_X_ideal_pure(NN,psi,angles_0[0:NN,:],angles_0[NN:2*NN,:])
+    u_0 = [0]*NN
+    for iq in range(NN):
+        u_0[iq] = SingleQubitRotationIS(np.arcsin(np.sqrt(angles_0[iq,0]))*2, 2*math.pi*angles_0[iq+NN,0])
+    prob0 = Simulate_Meas_pseudopure(NN,psi,0,u_0)
+    prob0 = np.reshape(prob0, [2]*NN)
+    X0 = get_X(prob0,NN)
+
     
+    #X00 = get_X_ideal_pure(NN,psi,angles_0[0:NN,:],angles_0[NN:2*NN,:])
     while (accept < num_nu+num_nu*burn_in):
         
         count += 1
@@ -137,9 +78,14 @@ def MetropolisSampling_pure(NN, psi, num_nu, burn_in):
         
         ## generating 2N angles (theta & phi) of the candidate unitary by sampling uniformly
         angles_candidate = random_gen.uniform(0,1,(2*NN,1))
-        
+        u_cand = [0]*NN
+        for iq in range(NN):
+            u_cand[iq] = SingleQubitRotationIS(np.arcsin(np.sqrt(angles_candidate[iq,0]))*2, 2*math.pi*angles_candidate[iq+NN,0])
+        prob_cand = Simulate_Meas_pseudopure(NN,psi,0,u_cand)
+        prob_cand = np.reshape(prob_cand, [2]*NN)
+        X_cand = get_X(prob_cand,NN)    
         ## constructing the X function of the ideal state with input angles of angles_candidate
-        X_cand = get_X_ideal_pure(NN,psi,angles_candidate[0:NN,:],angles_candidate[NN:2*NN,:])
+        #X_cand = get_X_ideal_pure(NN,psi,angles_candidate[0:NN,:],angles_candidate[NN:2*NN,:])
         
         ## choose a random number \beta uniformly in [0, 1]
         beta = 0
@@ -156,7 +102,7 @@ def MetropolisSampling_pure(NN, psi, num_nu, burn_in):
         
         ## append the obtained unitary angles and the corresponding weight function X_is for each u
         samples = np.append(samples, np.array([angles_0[:,0]]), axis = 0)        
-        X_theory = np.append(X_theory, np.array(X0), axis = 0)
+        X_theory = np.append(X_theory, np.array([X0]), axis = 0)
         
     print('\n')
     
@@ -210,7 +156,12 @@ def MetropolisSampling_mixed(NN, rho, num_nu, burn_in):
     angles_0 = random_gen.uniform(0,1,(2*NN,1))
     
     ## constructing the X function of the ideal state with input angles of angles_0 
-    X0 = get_X_ideal_mixed(NN,rho,angles_0[0:NN,:],angles_0[NN:2*NN,:])
+    u_0 = [0]*NN
+    for iq in range(NN):
+        u_0[iq] = SingleQubitRotationIS(np.arcsin(np.sqrt(angles_0[iq,0]))*2, 2*math.pi*angles_0[iq+NN,0])
+    prob0 = Simulate_Meas_mixed(NN,rho,u_0)
+    prob0 = np.reshape(prob0, [2]*NN)
+    X0 = get_X(prob0,NN)
     
     while (accept < num_nu+num_nu*burn_in):
         
@@ -218,10 +169,16 @@ def MetropolisSampling_mixed(NN, rho, num_nu, burn_in):
         print('Metropolis sampling {:d} % \r'.format(int(100*accept/(num_nu+num_nu*burn_in))),end = "",flush=True)
         
         ## generating 2N angles (theta & phi) of the candidate unitary by sampling uniformly
+        #angles_candidate = random_gen.uniform(0,1,(2*NN,1))
         angles_candidate = random_gen.uniform(0,1,(2*NN,1))
-        
+        u_cand = [0]*NN
+        for iq in range(NN):
+            u_cand[iq] = SingleQubitRotationIS(np.arcsin(np.sqrt(angles_candidate[iq,0]))*2, 2*math.pi*angles_candidate[iq+NN,0])
+        prob_cand = Simulate_Meas_mixed(NN,rho,u_cand)
+        prob_cand = np.reshape(prob_cand, [2]*NN)
+        X_cand = get_X(prob_cand,NN)    
         ## constructing the X function of the ideal state with input angles of angles_candidate
-        X_cand = get_X_ideal_mixed(NN,rho,angles_candidate[0:NN,:],angles_candidate[NN:2*NN,:])
+        #X_cand = get_X_ideal_mixed(NN,rho,angles_candidate[0:NN,:],angles_candidate[NN:2*NN,:])
         
         ## choose a random number \beta uniformly in [0, 1]
         beta = 0
@@ -238,7 +195,7 @@ def MetropolisSampling_mixed(NN, rho, num_nu, burn_in):
     
         ## append the obtained unitary angles and the corresponding weight function X_is for each u
         samples = np.append(samples, np.array([angles_0[:,0]]), axis = 0)        
-        X_theory = np.append(X_theory, np.array(X0), axis = 0)
+        X_theory = np.append(X_theory, np.array([X0]), axis = 0)
     print('\n')
     
 
@@ -255,8 +212,6 @@ def MetropolisSampling_mixed(NN, rho, num_nu, burn_in):
     for ii in range(2*NN):
         indexes = np.unique(samples[:,ii], return_index=True)[1]
         new_samples[:,ii] = np.array([samples[:,ii][index] for index in sorted(indexes)])
-    #indexes = np.unique(X_theory, return_index=True)[1]
-    #X_weight[:,0] = np.array([X_theory[index] for index in sorted(indexes)])   
     
     indexes = np.unique(X_theory, return_index=True)[1]
     if (round(p2_theory,6) == 2**(-NN)):

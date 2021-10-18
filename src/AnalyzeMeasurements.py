@@ -30,7 +30,7 @@ def get_prob(meas_data,NN):
 def reduce_prob(prob,NN,tracedsystem):
    return np.sum(prob,tuple(tracedsystem))
      
-def get_X(prob, NN,NM):
+def get_X(prob, NN):
     alphabet = "abcdefghijklmnopqsrtuvwxyz"
     alphabet_cap = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     Hamming_matrix = np.array([[1,-0.5],[-0.5,1]]) ## Hamming matrix for a single qubit
@@ -45,3 +45,16 @@ def get_X(prob, NN,NM):
     
 def unbias(X,NN,NM):
     return X*NM**2/(NM*(NM-1)) - 2**NN/(NM-1)
+
+def get_X_overlap(prob1,prob2, NN,NM):
+    alphabet = "abcdefghijklmnopqsrtuvwxyz"
+    alphabet_cap = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    Hamming_matrix = np.array([[1,-0.5],[-0.5,1]]) ## Hamming matrix for a single qubit
+    ein_command = alphabet[0:NN]
+    for ii in range(NN):
+        ein_command += ','
+        ein_command += alphabet[ii]+alphabet_cap[ii]
+    ein_command += ','+ alphabet_cap[0:NN]
+    Liste = [prob1] + [Hamming_matrix]*NN + [prob2]
+    XX_e = np.einsum(ein_command, *Liste, optimize = True)*2**NN
+    return XX_e

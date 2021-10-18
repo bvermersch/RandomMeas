@@ -73,7 +73,8 @@ for iu in range(Nu):
     print('Data acquisition {:d} % \r'.format(int(100*iu/(Nu))),end = "",flush=True)
     for iq in range(N):
         u[iq] = SingleQubitRotation(random_gen,mode)
-    Meas_Data_uni[iu,:] = Simulate_Meas_pseudopure(N, GHZ_state, p_depo, NM, u)
+    prob = Simulate_Meas_pseudopure(N, GHZ_state, p_depo, u)
+    Meas_Data_uni[iu,:] = Sampling_Meas(prob, N, NM)
     #Meas_Data[iu,:] = Simulate_Meas_mixed(N, rho, NM, u)
 print('Measurement data generated for uniform sampling')
 
@@ -83,8 +84,8 @@ for iu in range(Nu):
     print('Data acquisition {:d} % \r'.format(int(100*iu/(Nu))),end = "",flush=True)
     for iq in range(N):
         u[iq] = SingleQubitRotationIS(theta_is[iq,iu],phi_is[iq,iu])
-    Meas_Data_IS[iu,:] = Simulate_Meas_pseudopure(N, GHZ_state, p_depo, NM, u)
-    #Meas_Data[iu,:] = Simulate_Meas_mixed(N, rho, NM, u)
+    prob = Simulate_Meas_pseudopure(N, GHZ_state, p_depo, u)
+    Meas_Data_IS[iu,:] = Sampling_Meas(prob, N, NM)#Meas_Data[iu,:] = Simulate_Meas_mixed(N, rho, NM, u)
 print('Measurement data generated for importance sampling')
 
 ## Step 3: Estimation of the purities p2_uni and p2_IS
@@ -92,16 +93,17 @@ X_uni = np.zeros(Nu)
 X_imp = np.zeros(Nu)
 for iu in range(Nu):
     print('Postprocessing {:d} % \r'.format(int(100*iu/(Nu))),end = "",flush=True)
-    prob = get_prob(Meas_Data_uni[iu,:], N)
-    X_uni[iu] = get_X(prob,N,NM)
-    prob = get_prob(Meas_Data_IS[iu,:], N)
-    X_imp[iu] = get_X(prob,N,NM)
+    probe = get_prob(Meas_Data_uni[iu,:], N)
+    X_uni[iu] = get_X(probe,N)
+    probe = get_prob(Meas_Data_IS[iu,:], N)
+    X_imp[iu] = unbias(get_X(probe,N),N,NM)
 
 p2_uni = 0 # purity given by uniform sampling
-p2_uni = np.mean(X_uni)
+p2_uni = unbias(np.mean(X_uni),N,NM)
 p2_IS = 0 # purity given by importance sampling
 for iu in range(Nu):
     p2_IS += X_imp[iu]*n_r[iu]/p_IS[iu,0]/N_s
+#p2_IS = unbias(p2_IS, N,NM)
 
 print('Fidelity of the sampler: ', np.round(100*fid,2), '%')
 print('p2 (True value) = ', p2_exp)

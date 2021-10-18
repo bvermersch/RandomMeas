@@ -9,7 +9,6 @@ sys.path.append("src")
 from ObtainMeasurements import *
 from AnalyzeMeasurements import *
 from PreprocessingImportanceSampling import *
-from Functions_IS_mixed import *
 
 ### Initiate Random Generator
 a = random.SystemRandom().randrange(2 ** 32 - 1) #Init Random Generator
@@ -66,7 +65,8 @@ for iu in range(Nu_uni):
     print('Data acquisition {:d} % \r'.format(int(100*iu/(Nu_uni))),end = "",flush=True)
     for iq in range(N):
         u[iq] = SingleQubitRotation(random_gen,mode)
-    Meas_Data_uni[iu,:] = Simulate_Meas_mixed(N, rho, NM_uni, u)
+    Prob = Simulate_Meas_mixed(N, rho, u)
+    Meas_Data_uni[iu,:] = Sampling_Meas(Prob, N, NM_uni)
 print('Measurement data generated for uniform sampling')
 
 ### Reconstruct purities from measured bitstrings
@@ -74,10 +74,10 @@ print('Measurement data generated for uniform sampling')
 X = np.zeros((Nu_uni,len(qubit_partitions)))
 for iu in range(Nu_uni):
     print('PostProcessing {:d} % \r'.format(int(100*iu/(Nu_uni))),end = "",flush=True)
-    prob = get_prob(Meas_Data_uni[iu,:],N)
+    probe = get_prob(Meas_Data_uni[iu,:],N)
     for i_part in range(len(qubit_partitions)):
-        prob_subsystem = reduce_prob(prob,N,Traced_systems[i_part])
-        X[iu,i_part] = get_X(prob_subsystem,len(qubit_partitions[i_part]),NM_uni)
+        prob_subsystem = reduce_prob(probe,N,Traced_systems[i_part])
+        X[iu,i_part] = unbias(get_X(prob_subsystem,len(qubit_partitions[i_part])), len(qubit_partitions[i_part]), NM_uni)
 p2_subsystems_uni = np.mean(X,0)
 
 ## Evalauting purities with importance sampling
@@ -98,22 +98,23 @@ for iparts in range(num_partitions):
     # Importance sampling of the angles (theta_is) and (phi_is) using metropolis algorithm of the concerned system
     theta_is, phi_is, n_r, N_s, p_IS = MetropolisSampling_mixed(N_subsystem, rho_subsystem,Nu_IS[iparts], burn_in) 
 
-    ## Perform randomized measurements with the generated importance sampled unitaries
+    ## Perform randomized measurements with the generated the importance sampled unitaries
     u = [0]*N
     Meas_Data_IS = np.zeros((Nu_IS[iparts],NM_IS[iparts]),dtype='int64')
     for iu in range(Nu_IS[iparts]):
         print('Data acquisition {:d} % \r'.format(int(100*iu/(Nu_IS[iparts]))),end = "",flush=True)
         for iq in range(N_subsystem):
             u[iq] = SingleQubitRotationIS(theta_is[iq,iu],phi_is[iq,iu])
-        Meas_Data_IS[iu,:] = Simulate_Meas_mixed(N_subsystem, rho_subsystem, NM_IS[iparts], u)
+        Prob = Simulate_Meas_mixed(N_subsystem, rho_subsystem, u)
+        Meas_Data_IS[iu,:] = Sampling_Meas(Prob, N_subsystem, NM_IS[iparts])
     print('Measurement data generated for importance sampling \n')
     
-    ## Estimation of the purity p2_IS
+    ## Estimation of the puritiy p2_IS
     X_imp = np.zeros(Nu_IS[iparts])
     for iu in range(Nu_IS[iparts]):
         print('Postprocessing {:d} % \r'.format(int(100*iu/(Nu_IS[iparts]))),end = "",flush=True)
-        prob = get_prob(Meas_Data_IS[iu,:], N_subsystem)
-        X_imp[iu] = get_X(prob,N_subsystem,NM_IS[iparts])
+        probe = get_prob(Meas_Data_IS[iu,:], N_subsystem)
+        X_imp[iu] = unbias(get_X(probe,N_subsystem), N_subsystem, NM_IS[iparts])
     
     p2_IS = 0 # purity given by importance sampling
     for iu in range(Nu_IS[iparts]):

@@ -67,18 +67,24 @@ def Simulate_Meas_pseudopure(NN, psi, p, u):
     psiu = np.einsum(Co,*Listt,optimize = True).flatten()
     probb = np.abs(psiu)**2*(1-p) + p/d ## makes the probabilities noisy by adding white noise
     probb /= sum(probb)
+    #probb = np.reshape(probb, [2]*NN)
     #bit_strings = random_gen.choice(range(2**NN), size = NM, p = probb) 
     return probb
 
-def Simulate_Meas_mixed(N, rho,  u):
-        Unitary = u[0]
-        for i in range(1,N):
-            Unitary = np.kron(Unitary,u[i])
-        Prob = np.real(np.einsum('ab,bc,ac->a',Unitary,rho,np.conj(Unitary),optimize='greedy'))
-        Prob /= sum(Prob)
+def Simulate_Meas_mixed(NN, rho,  u):
+        #Unitary = u[0]
+        #for i in range(1,NN):
+        #    Unitary = np.kron(Unitary,u[i])
+        #Prob = np.real(np.einsum('ab,bc,ac->a',Unitary,rho,np.conj(Unitary),optimize='greedy'))
+        prob_tensor = rho.reshape(tuple([2] * (2*NN)),order='C')
+        for n in range(NN):
+            prob_tensor = np.einsum(u[n], [2*NN, n], prob_tensor, list(range(NN))+list(range(n+NN,2*NN)), np.conjugate(u[n]), [2*NN,NN+n], list(range(n)) + [2*NN] + list(range(n + 1, NN)) + list(range(NN+n+1,2*NN)))
+        probb= np.real(prob_tensor.reshape(2**NN))
+        probb /= sum(probb)
+        #Prob /= sum(Prob)
         #Sample NM measurements according to the bitstrings probabilities
         #bit_strings = random_gen.choice(range(2**N),p=Prob,size=NM)
-        return Prob
+        return probb
 
 def Sampling_Meas(prob,N,NM):
         return random_gen.choice(range(2**N),p=prob,size=NM)
