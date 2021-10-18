@@ -23,7 +23,14 @@ The purity is obtained with exponentially less measurements compared to the stan
 + [Original Paper](https://arxiv.org/abs/2102.13524)
 + [Tutorial](TutorialImportanceSampling.ipynb)
 + [Python Script](PurityImportanceSampling.py)
-+ Typical use: Up to 24 qubits
++ Typical use: Up to 25 qubits
+
+## Fidelity from importance sampling of randomized measurements
+The Fidelity between two noisy versions of the same state realized on two different devices is obtained with exponentially less measurements compared to the standard approach of uniform sampling. This is again based on importance sampling of random single qubit unitaries, with respect to the approximation of the ideal  quantum state, and same sampled unitaries are applied to both the devices.
+
++ [Original Paper](https://arxiv.org/abs/2102.13524)
++ [Python Script](FidelityImportanceSampling.py)
++ Typical use: Up to 25 qubits
 
 ## Topological entanglement entropy from importance sampling of randomized measurements
 The topological entanglement entropy "S_topo" is obtained with an order of magnitude less measurements compared to the standard approach of uniform sampling using  importance sampling of random single qubit unitaries, with respect to the modelled approximation of the quantum state.
