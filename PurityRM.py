@@ -56,6 +56,7 @@ p = 0.
 import qutip
 psiQ = qutip.Qobj(psi,dims=[ [2]*N,[1]*N] )
 rho = (1-p)*psiQ*psiQ.dag()+p/2**N
+
 print('Exact Purities')
 for Partition in Partitions:
         rhop = rho.ptrace(Partition)
@@ -77,13 +78,14 @@ print('Measurement data generated')
 ### Step 3:: Reconstruct purities from measured bitstrings
 N_part = len(Partitions)
 X = np.zeros((Nu,N_part))
+Purity = np.zeros(N_part)
 for iu in range(Nu):
     print('PostProcessing {:d} % \r'.format(int(100*iu/(Nu))),end = "",flush=True)
     prob = get_prob(Meas_Data[iu,:],N)
     for i_part in range(N_part):
         prob_subsystem = reduce_prob(prob,N,TracedSystems[i_part])
-        X[iu,i_part] = get_X(prob_subsystem,len(Partitions[i_part]),NM)
+        X[iu,i_part] = unbias(get_X(prob_subsystem,len(Partitions[i_part])), len(Partitions[i_part]), NM)
 Purity = np.mean(X,0)
-Purity = unbias(np.mean(X,0),N,NM)
+#Purity = unbias(np.mean(X,0),N,NM)
 for i_part in range(N_part):
     print('Partition ',Partitions[i_part], ":", Purity[i_part], '2nd Renyi Entropy : ',-np.log2(Purity[i_part]))
