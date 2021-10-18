@@ -46,10 +46,6 @@ NM_IS = [100000]*6 + [100000] ## number of measurements done for each importance
 burn_in = 1
 mode = 'CUE'
 
-# Could consider realizing a noisy version ofthe state experimentally. Noise given by depolarization noise strength p_depo
-p_depo = 0
-
-
 print('Evalaution of S_topo using uniform sampling with Nu = '+str(Nu_uni)+' and NM = '+str(NM_uni)+' \n ')
 ## storing purities for each partitions
 p2_subsystems_IS = np.zeros(num_partitions)

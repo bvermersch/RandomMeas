@@ -33,7 +33,7 @@ random_gen = np.random.RandomState(a)
 ### This script estimates the purity of a noisy GHZ realized in the experiment using uniform sampling and importance sampling from an ideal pure GHZ state
 ### Capable of simulating noisy GHZ state till N = 25 qubits !!!
 
-N = 15 ## Number of qubits of the GHZ state
+N = 16 ## Number of qubits of the GHZ state
 d = 2**N ## Hilbert space dimension
 
 # Consider realizing a noisy version of the GHZ state experimentally. Noise given by depolarization noise strength p_depo
@@ -56,16 +56,13 @@ Nu = 50 # number of unitaries to be used
 NM = d*4 # number of measurements to be performed for each unitary
 burn_in = 1 # determines the number of samples to be rejected during metropolis: (nu*burn_in) 
 mode = 'CUE'
-### Step 1: Preprocessing step for importance sampling Sample Y and Z rotation angles (2N angles for each unitary u)  
 
-# Importance sampling of the angles (theta_is) and (phi_is) using metropolis algorithm from a pure GHZ state
-theta_is, phi_is, n_r, N_s, p_IS = MetropolisSampling_pure(N, GHZ_state,Nu, burn_in) 
 
+print('Randomized measurements using uniform sampling with Nu = '+str(Nu)+' and NM = '+str(NM)+' \n ')
 ### Step 2: Perform Randomized measurements classically to get bit string data 
 ## This step can be replaced by the actual experimentally recorded bit strings for the applied unitaries
 
 Meas_Data_uni = np.zeros((Nu,NM),dtype='int64')
-Meas_Data_IS = np.zeros((Nu,NM),dtype='int64')
 
 ## Perform randomized measurements using uniformly sampled unitaries
 u = [0]*N
@@ -76,9 +73,29 @@ for iu in range(Nu):
     prob = Simulate_Meas_pseudopure(N, GHZ_state, p_depo, u)
     Meas_Data_uni[iu,:] = Sampling_Meas(prob, N, NM)
     #Meas_Data[iu,:] = Simulate_Meas_mixed(N, rho, NM, u)
-print('Measurement data generated for uniform sampling')
+print('Measurement data generated for uniform sampling \n')
 
-## Perform randomized measurements with the generated the importance sampled unitaries
+
+## Step 3: Estimation of the purity p2_uni
+X_uni = np.zeros(Nu)
+for iu in range(Nu):
+    print('Postprocessing {:d} % \r'.format(int(100*iu/(Nu))),end = "",flush=True)
+    probe = get_prob(Meas_Data_uni[iu,:], N)
+    X_uni[iu] = get_X(probe,N)
+
+
+p2_uni = 0 # purity given by uniform sampling
+p2_uni = unbias(np.mean(X_uni),N,NM)
+
+print('Randomized measurements using importance sampling with Nu = '+str(Nu)+' and NM = '+str(NM)+' \n ')
+
+### Step 1: Preprocessing step for importance sampling Sample Y and Z rotation angles (2N angles for each unitary u)  
+# Importance sampling of the angles (theta_is) and (phi_is) using metropolis algorithm from a pure GHZ state
+theta_is, phi_is, n_r, N_s, p_IS = MetropolisSampling_pure(N, GHZ_state,Nu, burn_in) 
+
+Meas_Data_IS = np.zeros((Nu,NM),dtype='int64')
+
+## Step 2: Perform randomized measurements with the generated the importance sampled unitaries
 u = [0]*N
 for iu in range(Nu):
     print('Data acquisition {:d} % \r'.format(int(100*iu/(Nu))),end = "",flush=True)
@@ -86,24 +103,19 @@ for iu in range(Nu):
         u[iq] = SingleQubitRotationIS(theta_is[iq,iu],phi_is[iq,iu])
     prob = Simulate_Meas_pseudopure(N, GHZ_state, p_depo, u)
     Meas_Data_IS[iu,:] = Sampling_Meas(prob, N, NM)#Meas_Data[iu,:] = Simulate_Meas_mixed(N, rho, NM, u)
-print('Measurement data generated for importance sampling')
-
-## Step 3: Estimation of the purities p2_uni and p2_IS
-X_uni = np.zeros(Nu)
+print('Measurement data generated for importance sampling \n')
+    
+## Step 3: Estimation of the purity p2_IS
 X_imp = np.zeros(Nu)
 for iu in range(Nu):
     print('Postprocessing {:d} % \r'.format(int(100*iu/(Nu))),end = "",flush=True)
-    probe = get_prob(Meas_Data_uni[iu,:], N)
-    X_uni[iu] = get_X(probe,N)
     probe = get_prob(Meas_Data_IS[iu,:], N)
     X_imp[iu] = unbias(get_X(probe,N),N,NM)
 
-p2_uni = 0 # purity given by uniform sampling
-p2_uni = unbias(np.mean(X_uni),N,NM)
 p2_IS = 0 # purity given by importance sampling
 for iu in range(Nu):
     p2_IS += X_imp[iu]*n_r[iu]/p_IS[iu,0]/N_s
-#p2_IS = unbias(p2_IS, N,NM)
+
 
 print('Fidelity of the sampler: ', np.round(100*fid,2), '%')
 print('p2 (True value) = ', p2_exp)
