@@ -22,15 +22,12 @@ from scipy import linalg
 
     
 def get_prob(meas_data,NN):
-    prob = np.bincount(meas_data,minlength=2**NN)
+    NM = len(meas_data)
+    prob = np.bincount(meas_data,minlength=2**NN)/NM
     prob = np.reshape(prob, [2]*NN)
     return prob
 
 def reduce_prob(prob,NN,tracedsystem):
-   # alphabet = "abcdefghijklmnopqsrtuvwxyz"
-   # alphabet_cap = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-   # ein_command = alphabet[0:NN]
-   # for i,s in enumerate(subsystem):
    return np.sum(prob,tuple(tracedsystem))
      
 def get_X(prob, NN,NM):
@@ -43,5 +40,8 @@ def get_X(prob, NN,NM):
         ein_command += alphabet[ii]+alphabet_cap[ii]
     ein_command += ','+ alphabet_cap[0:NN]
     Liste = [prob] + [Hamming_matrix]*NN + [prob]
-    XX_e = np.einsum(ein_command, *Liste, optimize = True)*2**NN/(NM*(NM-1)) - 2**NN/(NM-1)
+    XX_e = np.einsum(ein_command, *Liste, optimize = True)*2**NN
     return XX_e
+    
+def unbias(X,NN,NM):
+    return X*NM**2/(NM*(NM-1)) - 2**NN/(NM-1)

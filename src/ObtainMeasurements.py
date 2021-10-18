@@ -50,7 +50,7 @@ def SingleQubitRotation(random_gen,mode):
             U = np.eye(2)
     return U
 
-def Simulate_Meas_pseudopure(NN, psi, p, NM, u):
+def Simulate_Meas_pseudopure(NN, psi, p, u):
     alphabet = "abcdefghijklmnopqsrtuvwxyz"
     alphabet_cap = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     d = 2**NN
@@ -67,16 +67,18 @@ def Simulate_Meas_pseudopure(NN, psi, p, NM, u):
     psiu = np.einsum(Co,*Listt,optimize = True).flatten()
     probb = np.abs(psiu)**2*(1-p) + p/d ## makes the probabilities noisy by adding white noise
     probb /= sum(probb)
-    bit_strings = random_gen.choice(range(2**NN), size = NM, p = probb) 
-    return bit_strings 
+    #bit_strings = random_gen.choice(range(2**NN), size = NM, p = probb) 
+    return probb
 
-def Simulate_Meas_mixed(N, rho, NM, u):
+def Simulate_Meas_mixed(N, rho,  u):
         Unitary = u[0]
         for i in range(1,N):
             Unitary = np.kron(Unitary,u[i])
         Prob = np.real(np.einsum('ab,bc,ac->a',Unitary,rho,np.conj(Unitary),optimize='greedy'))
         Prob /= sum(Prob)
         #Sample NM measurements according to the bitstrings probabilities
-        bit_strings = random_gen.choice(range(2**N),p=Prob,size=NM)
-        return bit_strings
+        #bit_strings = random_gen.choice(range(2**N),p=Prob,size=NM)
+        return Prob
 
+def Sampling_Meas(prob,N,NM):
+        return random_gen.choice(range(2**N),p=prob,size=NM)

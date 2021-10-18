@@ -29,9 +29,9 @@ from AnalyzeMeasurements import *
 
 
 ## Parameters
-N = 12 # Number of qubits to analyze
-Nu = 1000 # Number of random unitaries to be used
-NM = 4000 # Number of projective measurements (shots) per random unitary
+N = 7 # Number of qubits to analyze
+Nu = 500 # Number of random unitaries to be used
+NM = 500 # Number of projective measurements (shots) per random unitary
 mode = 'CUE'
 Partitions =  [range(Nsub) for Nsub in range(1,N+1)]
 TracedSystems =  [ [x for x in range(N) if x not in p ] for p in Partitions]
@@ -69,7 +69,8 @@ for iu in range(Nu):
     print('Data acquisition {:d} % \r'.format(int(100*iu/(Nu))),end = "",flush=True)
     for i in range(N):
         u[i] = SingleQubitRotation(random_gen,mode)
-    Meas_Data[iu,:] = Simulate_Meas_pseudopure(N, psi, p, NM, u)
+    prob = Simulate_Meas_pseudopure(N, psi, p, u)
+    Meas_Data[iu,:] = Sampling_Meas(prob,N,NM)
     #Meas_Data[iu,:] = Simulate_Meas_mixed(N, rho, NM, u)
 print('Measurement data generated')
 
@@ -83,5 +84,6 @@ for iu in range(Nu):
         prob_subsystem = reduce_prob(prob,N,TracedSystems[i_part])
         X[iu,i_part] = get_X(prob_subsystem,len(Partitions[i_part]),NM)
 Purity = np.mean(X,0)
+Purity = unbias(np.mean(X,0),N,NM)
 for i_part in range(N_part):
     print('Partition ',Partitions[i_part], ":", Purity[i_part], '2nd Renyi Entropy : ',-np.log2(Purity[i_part]))
