@@ -28,7 +28,7 @@ The purity is obtained with exponentially less measurements compared to the stan
 ## Fidelity from importance sampling of randomized measurements
 The Fidelity between two noisy versions of the same state realized on two different devices is obtained with exponentially less measurements compared to the standard approach of uniform sampling. This is again based on importance sampling of random single qubit unitaries, with respect to the approximation of the ideal  quantum state, and same sampled unitaries are applied to both the devices.
 
-+ [Original Paper](https://arxiv.org/abs/2102.13524)
++ [Original Paper](https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.124.010504)(https://arxiv.org/abs/2102.13524)
 + [Python Script](FidelityImportanceSampling.py)
 + Typical use: Up to 25 qubits
 
