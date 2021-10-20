@@ -29,7 +29,7 @@ from AnalyzeMeasurements import *
 
 
 ## Parameters
-N = 7 # Number of qubits to analyze
+N = 3 # Number of qubits to analyze
 Nu = 1000 # Number of random unitaries to be used
 NM = 5000 # Number of projective measurements (shots) per random unitary
 mode = 'CUE'
@@ -49,8 +49,8 @@ if (N>16):
     print('Please reduce N (or adapt the call to np.unpackbits)')
     
 ## depolarisation noise strength for the two devices
-p1 = 0.1 ## noise in the first device
-p2 = 0.2 ## noise in the second device
+p1 = 0. ## noise in the first device
+p2 = 0. ## noise in the second device
 
 ### Or a qutip random density matrix combined with a pure product state qubit
 #rho = qutip.tensor(qutip.rand_dm(2**(N-1),pure=True),qutip.basis(2,0)*qutip.basis(2,0).dag()).data.todense()
@@ -65,7 +65,10 @@ print('Exact Fidelities')
 for Partition in Partitions:
         rhop1 = rho1.ptrace(Partition)
         rhop2 = rho2.ptrace(Partition)
-        print('Partition ',Partition, ":", (rhop1*rhop2).tr())
+        overlap = (rhop1*rhop2).tr()
+        denominator = max([(rhop1**2).tr(),(rhop2**2).tr()])
+        fidelity_e = overlap/denominator
+        print('Partition ',Partition, ":", fidelity_e)
 
 ### Step 2:: Perform randomized measurements
 psi = np.reshape(psi,[2]*N)
@@ -86,6 +89,8 @@ print('Measurement data generated \n')
 ### Step 3:: Reconstruct purities from measured bitstrings
 N_part = len(Partitions)
 X_overlap = np.zeros((Nu,N_part))
+X_1 = np.zeros((Nu,N_part))
+X_2 = np.zeros((Nu,N_part))
 for iu in range(Nu):
     print('PostProcessing {:d} % \r'.format(int(100*iu/(Nu))),end = "",flush=True)
     probe1 = get_prob(Meas_Data1[iu,:],N)
@@ -93,9 +98,12 @@ for iu in range(Nu):
     for i_part in range(N_part):
         prob_subsystem1 = reduce_prob(probe1,N,TracedSystems[i_part])
         prob_subsystem2 = reduce_prob(probe2,N,TracedSystems[i_part])
-        X_overlap[iu, i_part] = get_X_overlap(prob_subsystem1, prob_subsystem2, len(Partitions[i_part]), NM)
-        #X[iu,i_part] = get_X(prob_subsystem,len(Partitions[i_part]),NM)
-RM_fidelity = np.mean(X_overlap,0)
+        X_overlap[iu, i_part] = get_X_overlap(prob_subsystem1, prob_subsystem2, len(Partitions[i_part]))
+        X_1[iu, i_part] = get_X(prob_subsystem1, len(Partitions[i_part]))
+        X_2[iu, i_part] = get_X(prob_subsystem2, len(Partitions[i_part]))
+        X_1[iu,i_part] = unbias(X_1[iu,i_part], N, NM)
+        X_2[iu,i_part] = unbias(X_1[iu,i_part], N, NM)
+RM_fidelity = np.mean(X_overlap,0)/np.max([np.mean(X_1,0),np.mean(X_2,0)],0)
 print('RM Fidelities')
 for i_part in range(N_part):
     print('Partition ',Partitions[i_part], ":", RM_fidelity[i_part])

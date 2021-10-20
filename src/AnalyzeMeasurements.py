@@ -46,7 +46,7 @@ def get_X(prob, NN):
 def unbias(X,NN,NM):
     return X*NM**2/(NM*(NM-1)) - 2**NN/(NM-1)
 
-def get_X_overlap(prob1,prob2, NN,NM):
+def get_X_overlap(prob1,prob2,NN):
     alphabet = "abcdefghijklmnopqsrtuvwxyz"
     alphabet_cap = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     Hamming_matrix = np.array([[1,-0.5],[-0.5,1]]) ## Hamming matrix for a single qubit
