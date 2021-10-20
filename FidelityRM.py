@@ -29,7 +29,7 @@ from AnalyzeMeasurements import *
 
 
 ## Parameters
-N = 3 # Number of qubits to analyze
+N = 7 # Number of qubits to analyze
 Nu = 1000 # Number of random unitaries to be used
 NM = 5000 # Number of projective measurements (shots) per random unitary
 mode = 'CUE'
@@ -49,8 +49,8 @@ if (N>16):
     print('Please reduce N (or adapt the call to np.unpackbits)')
     
 ## depolarisation noise strength for the two devices
-p1 = 0. ## noise in the first device
-p2 = 0. ## noise in the second device
+p1 = 0.1 ## noise in the first device
+p2 = 0.2 ## noise in the second device
 
 ### Or a qutip random density matrix combined with a pure product state qubit
 #rho = qutip.tensor(qutip.rand_dm(2**(N-1),pure=True),qutip.basis(2,0)*qutip.basis(2,0).dag()).data.todense()
@@ -67,7 +67,7 @@ for Partition in Partitions:
         rhop2 = rho2.ptrace(Partition)
         overlap = (rhop1*rhop2).tr()
         denominator = max([(rhop1**2).tr(),(rhop2**2).tr()])
-        fidelity_e = overlap#/denominator
+        fidelity_e = overlap/denominator
         print('Partition ',Partition, ":", fidelity_e)
 
 ### Step 2:: Perform randomized measurements
@@ -104,7 +104,7 @@ for iu in range(Nu):
         X_2[iu, i_part] = get_X(prob_subsystem2, len(Partitions[i_part]))
         X_1[iu,i_part] = unbias(X_1[iu,i_part], len(Partitions[i_part]), NM)
         X_2[iu,i_part] = unbias(X_2[iu,i_part], len(Partitions[i_part]), NM)
-RM_fidelity = np.mean(X_overlap,0)#/np.max([np.mean(X_1,0),np.mean(X_2,0)],0)
+RM_fidelity = np.mean(X_overlap,0)/np.max([np.mean(X_1,0),np.mean(X_2,0)],0)
 print('RM Fidelities')
 for i_part in range(N_part):
     print('Partition ',Partitions[i_part], ":", RM_fidelity[i_part])
