@@ -46,7 +46,7 @@ p2_exp1 = (1-p_depo1)**2 + (1-(1-p_depo1)**2)/d ## purity of first realized nois
 p2_exp2 = (1-p_depo2)**2 + (1-(1-p_depo2)**2)/d ## purity of second realized noisy GHZ state
 p2_theory = 1 ## Purity of the ideal pure GHZ state
 fidelity_theory = (1-p_depo1)*(1-p_depo2) + (p_depo1*p_depo2)/d**2 + (1-p_depo1)*p_depo2/d + (1-p_depo2)*p_depo1/d ## Fidelity between the ideal and the experimenetal GHZ state
-#fidelity_theory /= math.sqrt(p2_exp1* p2_exp2)
+fidelity_theory /= max(p2_exp1, p2_exp2)
 
 ### Creating the ideal pure GHZ state:
 GHZ = np.zeros(d)
@@ -90,7 +90,7 @@ for iu in range(Nu):
     X_uni_1[iu] = get_X(prob1e,N)
     prob2e = get_prob(Meas_Data_uni_2[iu,:], N)
     X_uni_2[iu] = get_X(prob2e,N)
-    X_uni_fidelity[iu] = get_X_overlap(prob1e,prob2e,N,NM)
+    X_uni_fidelity[iu] = get_X_overlap(prob1e,prob2e,N)
 
 p2_uni_1 = 0
 p2_uni_2 = 0 
@@ -99,7 +99,7 @@ RM_fidelity_uni = 0
 p2_uni_1 = unbias(np.mean(X_uni_1), N, NM)
 p2_uni_2 = unbias(np.mean(X_uni_2),N,NM)
 RM_fidelity_uni = np.mean(X_uni_fidelity)
-#RM_fidelity_uni /= math.sqrt(p2_uni_1* p2_uni_2)
+RM_fidelity_uni /= max(p2_uni_1, p2_uni_2)
 
 ### Step 1: Preprocessing step for importance sampling Sample Y and Z rotation angles (2N angles for each unitary u)  
 print('Randomized measurements using importance sampling ')
@@ -132,7 +132,7 @@ for iu in range(Nu):
     X_imp_1[iu] = unbias(get_X(prob1e,N), N, NM)
     prob2e = get_prob(Meas_Data_IS_2[iu,:], N)
     X_imp_2[iu] = unbias(get_X(prob2e,N), N, NM)
-    X_imp_fidelity[iu] = get_X_overlap(prob1e,prob2e,N,NM)
+    X_imp_fidelity[iu] = get_X_overlap(prob1e,prob2e,N)
 
 p2_IS_1 = 0 # purity given by uniform sampling
 p2_IS_2 = 0 # purity given by uniform sampling
@@ -143,7 +143,7 @@ for iu in range(Nu):
     p2_IS_2 += X_imp_2[iu]*n_r[iu]/p_IS[iu,0]/N_s
     RM_fidelity_IS += X_imp_fidelity[iu]*n_r[iu]/p_IS[iu,0]/N_s
 
-#RM_fidelity_IS /= math.sqrt(p2_IS_1*p2_IS_2)
+RM_fidelity_IS /= max(p2_IS_1,p2_IS_2)
 ## results of the first device
 print('p2 (True value) of the first state = ', p2_exp1)
 print('p2 (uniform sampling) of the first state = ', p2_uni_1)

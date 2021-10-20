@@ -67,7 +67,7 @@ for Partition in Partitions:
         rhop2 = rho2.ptrace(Partition)
         overlap = (rhop1*rhop2).tr()
         denominator = max([(rhop1**2).tr(),(rhop2**2).tr()])
-        fidelity_e = overlap/denominator
+        fidelity_e = overlap#/denominator
         print('Partition ',Partition, ":", fidelity_e)
 
 ### Step 2:: Perform randomized measurements
@@ -101,9 +101,9 @@ for iu in range(Nu):
         X_overlap[iu, i_part] = get_X_overlap(prob_subsystem1, prob_subsystem2, len(Partitions[i_part]))
         X_1[iu, i_part] = get_X(prob_subsystem1, len(Partitions[i_part]))
         X_2[iu, i_part] = get_X(prob_subsystem2, len(Partitions[i_part]))
-        X_1[iu,i_part] = unbias(X_1[iu,i_part], N, NM)
-        X_2[iu,i_part] = unbias(X_1[iu,i_part], N, NM)
-RM_fidelity = np.mean(X_overlap,0)/np.max([np.mean(X_1,0),np.mean(X_2,0)],0)
+        X_1[iu,i_part] = unbias(X_1[iu,i_part], len(Partitions[i_part]), NM)
+        X_2[iu,i_part] = unbias(X_2[iu,i_part], len(Partitions[i_part]), NM)
+RM_fidelity = np.mean(X_overlap,0)#/np.max([np.mean(X_1,0),np.mean(X_2,0)],0)
 print('RM Fidelities')
 for i_part in range(N_part):
     print('Partition ',Partitions[i_part], ":", RM_fidelity[i_part])
