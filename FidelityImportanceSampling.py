@@ -45,8 +45,8 @@ p_depo2 = 0.5
 p2_exp1 = (1-p_depo1)**2 + (1-(1-p_depo1)**2)/d ## purity of first realized noisy GHZ state
 p2_exp2 = (1-p_depo2)**2 + (1-(1-p_depo2)**2)/d ## purity of second realized noisy GHZ state
 p2_theory = 1 ## Purity of the ideal pure GHZ state
-fidelity_theory = (1-p_depo1)*(1-p_depo2) + (p_depo1*p_depo2)/d**2 + (1-p_depo1)*p_depo2/d + (1-p_depo2)*p_depo1/d ## Fidelity between the ideal and the experimenetal GHZ state
-fidelity_theory /= max(p2_exp1, p2_exp2)
+fidelity_theory = (1-p_depo1)*(1-p_depo2) + (p_depo1*p_depo2)/d**2 + (1-p_depo1)*p_depo2/d + (1-p_depo2)*p_depo1/d 
+fidelity_theory /= max(p2_exp1, p2_exp2) ## Fidelity between the 2 realized states
 
 ### Creating the ideal pure GHZ state:
 GHZ = np.zeros(d)
@@ -94,12 +94,13 @@ for iu in range(Nu):
 
 p2_uni_1 = 0
 p2_uni_2 = 0 
-RM_fidelity_uni = 0
+RM_fidelity_uni = 0 #Fidelity given by uniform sampling
 
 p2_uni_1 = unbias(np.mean(X_uni_1), N, NM)
 p2_uni_2 = unbias(np.mean(X_uni_2),N,NM)
 RM_fidelity_uni = np.mean(X_uni_fidelity)
 RM_fidelity_uni /= max(p2_uni_1, p2_uni_2)
+
 
 ### Step 1: Preprocessing step for importance sampling Sample Y and Z rotation angles (2N angles for each unitary u)  
 print('Randomized measurements using importance sampling ')
@@ -134,9 +135,9 @@ for iu in range(Nu):
     X_imp_2[iu] = unbias(get_X(prob2e,N), N, NM)
     X_imp_fidelity[iu] = get_X_overlap(prob1e,prob2e,N)
 
-p2_IS_1 = 0 # purity given by importance sampling
-p2_IS_2 = 0 # purity given by importance sampling
-RM_fidelity_IS = 0 # purity given by importance sampling
+p2_IS_1 = 0 
+p2_IS_2 = 0 
+RM_fidelity_IS = 0 # Fidelity given by importance sampling
 
 for iu in range(Nu):
     p2_IS_1 += X_imp_1[iu]*n_r[iu]/p_IS[iu,0]/N_s
@@ -159,6 +160,7 @@ print('p2 (Importance sampling) = ', p2_IS_2)
 print ('Error uniform: ', np.round(100*(np.abs(p2_uni_2-p2_exp2)/p2_exp2),2), '%')
 print ('Error IS: ', np.round(100*(np.abs(p2_IS_2-p2_exp2)/p2_exp2),2), '% \n')
 
+## Results of fidelity estimattion between the two devices
 print('True value of fidelity between the two states: ', fidelity_theory)
 print('Fidelity (uniform sampling) = ', RM_fidelity_uni)
 print('Fidelity (Importance sampling) = ', RM_fidelity_IS)
