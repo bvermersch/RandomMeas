@@ -134,8 +134,8 @@ for iu in range(Nu):
     X_imp_2[iu] = unbias(get_X(prob2e,N), N, NM)
     X_imp_fidelity[iu] = get_X_overlap(prob1e,prob2e,N)
 
-p2_IS_1 = 0 # purity given by uniform sampling
-p2_IS_2 = 0 # purity given by uniform sampling
+p2_IS_1 = 0 # purity given by importance sampling
+p2_IS_2 = 0 # purity given by importance sampling
 RM_fidelity_IS = 0 # purity given by importance sampling
 
 for iu in range(Nu):
