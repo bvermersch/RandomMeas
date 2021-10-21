@@ -42,9 +42,6 @@ def SingleQubitRotationIS(theta,phi):
     U = np.array(RY(theta)*RZ(phi))
     return U
 
-### Initialozations for the einsum function
-alphabet = "abcdefghijklmnopqsrtuvwxyz"
-alphabet_cap = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 ## provides importance sampled rotation angles along RY and RZ
 def MetropolisSampling_pure(NN, psi, num_nu, burn_in):

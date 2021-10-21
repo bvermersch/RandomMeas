@@ -37,7 +37,7 @@ N = 15 ## Number of qubits of the GHZ state
 d = 2**N ## Hilbert space dimension
 
 # Consider realizing the two noisy versions of the GHZ state experimentally. Noise given by depolarization noise strength p_depo
-p_depo1 = 0.2
+p_depo1 = 0.5
 p_depo2 = 0.5
 
 
