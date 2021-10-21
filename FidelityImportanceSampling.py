@@ -160,7 +160,7 @@ print('p2 (Importance sampling) = ', p2_IS_2)
 print ('Error uniform: ', np.round(100*(np.abs(p2_uni_2-p2_exp2)/p2_exp2),2), '%')
 print ('Error IS: ', np.round(100*(np.abs(p2_IS_2-p2_exp2)/p2_exp2),2), '% \n')
 
-## Results of fidelity estimattion between the two devices
+## Results of fidelity estimation between the two devices
 print('True value of fidelity between the two states: ', fidelity_theory)
 print('Fidelity (uniform sampling) = ', RM_fidelity_uni)
 print('Fidelity (Importance sampling) = ', RM_fidelity_IS)
