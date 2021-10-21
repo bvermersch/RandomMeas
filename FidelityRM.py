@@ -105,6 +105,6 @@ for iu in range(Nu):
         X_1[iu,i_part] = unbias(X_1[iu,i_part], len(Partitions[i_part]), NM)
         X_2[iu,i_part] = unbias(X_2[iu,i_part], len(Partitions[i_part]), NM)
 RM_fidelity = np.mean(X_overlap,0)/np.max([np.mean(X_1,0),np.mean(X_2,0)],0)
-print('RM Fidelities')
+print('\n RM Fidelities')
 for i_part in range(N_part):
     print('Partition ',Partitions[i_part], ":", RM_fidelity[i_part])

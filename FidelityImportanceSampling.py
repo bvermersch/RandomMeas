@@ -38,10 +38,10 @@ d = 2**N ## Hilbert space dimension
 
 # Consider realizing the two noisy versions of the GHZ state experimentally. Noise given by depolarization noise strength p_depo
 p_depo1 = 0.2
-p_depo2 = 0.1
+p_depo2 = 0.5
 
 
-## Theoretical purity esitmates:
+## Theoretical purity and fidelity esitmates:
 p2_exp1 = (1-p_depo1)**2 + (1-(1-p_depo1)**2)/d ## purity of first realized noisy GHZ state
 p2_exp2 = (1-p_depo2)**2 + (1-(1-p_depo2)**2)/d ## purity of second realized noisy GHZ state
 p2_theory = 1 ## Purity of the ideal pure GHZ state
@@ -56,7 +56,7 @@ GHZ_state = np.reshape(GHZ, [2]*N)
 
 
 ### Importance sampling provides best performances for Nu ~ O(N) and NM ~O(2^N) !!
-Nu = 50 # number of unitaries to be used
+Nu = 20 # number of unitaries to be used
 NM = d*5 # number of measurements to be performed for each unitary
 burn_in = 1 # determines the number of samples to be rejected during metropolis: (nu*burn_in) 
 mode = 'CUE'
@@ -144,6 +144,7 @@ for iu in range(Nu):
     RM_fidelity_IS += X_imp_fidelity[iu]*n_r[iu]/p_IS[iu,0]/N_s
 
 RM_fidelity_IS /= max(p2_IS_1,p2_IS_2)
+
 ## results of the first device
 print('p2 (True value) of the first state = ', p2_exp1)
 print('p2 (uniform sampling) of the first state = ', p2_uni_1)
