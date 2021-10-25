@@ -12,7 +12,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-# Codes to reconstruct the purity via Importance Sampling
+# Code to reconstruct the purity via Importance Sampling
 
 import numpy as np
 import math
@@ -39,7 +39,7 @@ d = 2**N ## Hilbert space dimension
 # Consider realizing a noisy version of the GHZ state experimentally. Noise given by depolarization noise strength p_depo
 p_depo = 0.25
 
-## Theoretical purity esitmates:
+## Theoretical purity estimates:
 p2_exp = (1-p_depo)**2 + (1-(1-p_depo)**2)/d ## purity of the realized noisy GHZ state
 p2_theory = 1 ## Purity of the ideal pure GHZ state
 fid = (1-p_depo) + p_depo/d ## Fidelity between the ideal and the experimenetal GHZ state
@@ -52,6 +52,7 @@ GHZ_state = np.reshape(GHZ, [2]*N)
 
 
 ### Importance sampling provides best performances for Nu ~ O(N) and NM ~O(2^N) !!
+
 Nu = 50 # number of unitaries to be used
 NM = d*4 # number of measurements to be performed for each unitary
 burn_in = 1 # determines the number of samples to be rejected during metropolis: (nu*burn_in) 
@@ -89,20 +90,21 @@ p2_uni = unbias(np.mean(X_uni),N,NM)
 
 print('Randomized measurements using importance sampling with Nu = '+str(Nu)+' and NM = '+str(NM)+' \n ')
 
-### Step 1: Preprocessing step for importance sampling Sample Y and Z rotation angles (2N angles for each unitary u)  
+### Step 1: Preprocessing step for importance sampling. Sample Y and Z rotation angles (2N angles for each unitary u)  
 # Importance sampling of the angles (theta_is) and (phi_is) using metropolis algorithm from a pure GHZ state
 theta_is, phi_is, n_r, N_s, p_IS = MetropolisSampling_pure(N, GHZ_state,Nu, burn_in) 
 
 Meas_Data_IS = np.zeros((Nu,NM),dtype='int64')
 
-## Step 2: Perform randomized measurements with the generated the importance sampled unitaries
+## Step 2: Perform randomized measurements with the generated importance sampled unitaries
 u = [0]*N
 for iu in range(Nu):
     print('Data acquisition {:d} % \r'.format(int(100*iu/(Nu))),end = "",flush=True)
     for iq in range(N):
         u[iq] = SingleQubitRotationIS(theta_is[iq,iu],phi_is[iq,iu])
     prob = Simulate_Meas_pseudopure(N, GHZ_state, p_depo, u)
-    Meas_Data_IS[iu,:] = Sampling_Meas(prob, N, NM)#Meas_Data[iu,:] = Simulate_Meas_mixed(N, rho, NM, u)
+    Meas_Data_IS[iu,:] = Sampling_Meas(prob, N, NM)
+    #Meas_Data[iu,:] = Simulate_Meas_mixed(N, rho, NM, u)
 print('Measurement data generated for importance sampling \n')
     
 ## Step 3: Estimation of the purity p2_IS
