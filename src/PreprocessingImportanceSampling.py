@@ -62,7 +62,7 @@ def MetropolisSampling_pure(NN, psi, num_nu, burn_in):
     u_0 = [0]*NN
     for iq in range(NN):
         u_0[iq] = SingleQubitRotationIS(np.arcsin(np.sqrt(angles_0[iq,0]))*2, 2*math.pi*angles_0[iq+NN,0])
-    prob0 = Simulate_Meas_pseudopure(NN,psi,0,u_0)
+    prob0 = ObtainOutcomeProbabilities_pseudopure(NN, psi, u_0, 0)
     prob0 = np.reshape(prob0, [2]*NN)
     X0 = get_X(prob0,NN)
 
@@ -78,7 +78,7 @@ def MetropolisSampling_pure(NN, psi, num_nu, burn_in):
         u_cand = [0]*NN
         for iq in range(NN):
             u_cand[iq] = SingleQubitRotationIS(np.arcsin(np.sqrt(angles_candidate[iq,0]))*2, 2*math.pi*angles_candidate[iq+NN,0])
-        prob_cand = Simulate_Meas_pseudopure(NN,psi,0,u_cand)
+        prob_cand = ObtainOutcomeProbabilities_pseudopure(NN, psi, u_cand, 0)
         prob_cand = np.reshape(prob_cand, [2]*NN)
         X_cand = get_X(prob_cand,NN)    
         ## constructing the X function of the ideal state with input angles of angles_candidate
@@ -156,7 +156,7 @@ def MetropolisSampling_mixed(NN, rho, num_nu, burn_in):
     u_0 = [0]*NN
     for iq in range(NN):
         u_0[iq] = SingleQubitRotationIS(np.arcsin(np.sqrt(angles_0[iq,0]))*2, 2*math.pi*angles_0[iq+NN,0])
-    prob0 = Simulate_Meas_mixed(NN,rho,u_0)
+    prob0 = ObtainOutcomeProbabilities_mixed(NN, rho, u_0)
     prob0 = np.reshape(prob0, [2]*NN)
     X0 = get_X(prob0,NN)
     
@@ -171,7 +171,7 @@ def MetropolisSampling_mixed(NN, rho, num_nu, burn_in):
         u_cand = [0]*NN
         for iq in range(NN):
             u_cand[iq] = SingleQubitRotationIS(np.arcsin(np.sqrt(angles_candidate[iq,0]))*2, 2*math.pi*angles_candidate[iq+NN,0])
-        prob_cand = Simulate_Meas_mixed(NN,rho,u_cand)
+        prob_cand = ObtainOutcomeProbabilities_mixed(NN, rho, u_cand)
         prob_cand = np.reshape(prob_cand, [2]*NN)
         X_cand = get_X(prob_cand,NN)    
         ## constructing the X function of the ideal state with input angles of angles_candidate

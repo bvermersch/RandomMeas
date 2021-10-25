@@ -20,11 +20,9 @@ import cmath
 from qutip import *
 import random 
 from scipy import linalg
-import sys
-sys.path.append("src")
-from ObtainMeasurements import *
-from AnalyzeMeasurements import *
-from PreprocessingImportanceSampling import *
+from src.ObtainMeasurements import *
+from src.AnalyzeMeasurements import *
+from src.PreprocessingImportanceSampling import *
 
 ### Initiate Random Generator
 a = random.SystemRandom().randrange(2 ** 32 - 1) #Init Random Generator
@@ -71,7 +69,7 @@ for iu in range(Nu):
     print('Data acquisition {:d} % \r'.format(int(100*iu/(Nu))),end = "",flush=True)
     for iq in range(N):
         u[iq] = SingleQubitRotation(random_gen,mode)
-    prob = Simulate_Meas_pseudopure(N, GHZ_state, p_depo, u)
+    prob = ObtainOutcomeProbabilities_pseudopure(N, GHZ_state, u, p_depo)
     Meas_Data_uni[iu,:] = Sampling_Meas(prob, N, NM)
     #Meas_Data[iu,:] = Simulate_Meas_mixed(N, rho, NM, u)
 print('Measurement data generated for uniform sampling \n')
@@ -102,7 +100,7 @@ for iu in range(Nu):
     print('Data acquisition {:d} % \r'.format(int(100*iu/(Nu))),end = "",flush=True)
     for iq in range(N):
         u[iq] = SingleQubitRotationIS(theta_is[iq,iu],phi_is[iq,iu])
-    prob = Simulate_Meas_pseudopure(N, GHZ_state, p_depo, u)
+    prob = ObtainOutcomeProbabilities_pseudopure(N, GHZ_state, u, p_depo)
     Meas_Data_IS[iu,:] = Sampling_Meas(prob, N, NM)
     #Meas_Data[iu,:] = Simulate_Meas_mixed(N, rho, NM, u)
 print('Measurement data generated for importance sampling \n')

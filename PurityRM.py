@@ -21,10 +21,8 @@
 import random
 import numpy as np
 from scipy import linalg
-import sys
-sys.path.append("src")
-from ObtainMeasurements import *
-from AnalyzeMeasurements import *
+from src.ObtainMeasurements import *
+from src.AnalyzeMeasurements import *
 #from qutip import *
 
 
@@ -33,52 +31,58 @@ N = 7 # Number of qubits to analyze
 Nu = 500 # Number of random unitaries to be used
 NM = 500 # Number of projective measurements (shots) per random unitary
 mode = 'CUE'
-Partitions =  [range(Nsub) for Nsub in range(1,N+1)]
-TracedSystems =  [ [x for x in range(N) if x not in p ] for p in Partitions]
+Partitions =  [list(range(Nsub)) for Nsub in range(1,N+1)]
 
 ### Initiate Random Generator
 a = random.SystemRandom().randrange(2 ** 32 - 1) #Init Random Generator
 random_gen = np.random.RandomState(a)
 
 ### Step 1:: Create a quantum state
+
+# The quantum state is represented by a variable qstate and is stored as numpy.array of type numpy.complex_ )
+# It can be a pure state psi of dimension (2**N,) or a mixed state rho of dimension (2**N,2**N).
+#
+# An additional parameter p can be specified to admix the identity
+# |psi><psi| ->  (1-p)*|psi><psi| + p*1/2**N or rho ->  (1-p)*rho + p*1/2**N
+
 ## A GHZ state
-psi = np.zeros(2**N)
-psi[0] = 1./np.sqrt(2)
-psi[-1] = 1./np.sqrt(2)
+qstate = np.zeros(2**N,dtype=np.complex_)
+qstate[0] = 1./np.sqrt(2)
+qstate[-1] = 1./np.sqrt(2)
 if (N>16):
     print('Please reduce N (or adapt the call to np.unpackbits)')
 p = 0.
 
-### Or a qutip random density matrix combined with a pure product state qubit
-#rho = qutip.tensor(qutip.rand_dm(2**(N-1),pure=True),qutip.basis(2,0)*qutip.basis(2,0).dag()).data.todense()
+### A random mixed state
+#import qutip
+#qstate = qutip.rand_dm(2**N).full()
+#p=0.
+
+
 
 ## Optional: calculate exact purities with Qutip partial trace function
-import qutip
-psiQ = qutip.Qobj(psi,dims=[ [2]*N,[1]*N] )
-rho = (1-p)*psiQ*psiQ.dag()+p/2**N
-
+from  src.ObtainExactValues import obtainExactPurities as obtExPur
+purities = obtExPur(N,qstate, Partitions,p)
 print('Exact Purities')
-for Partition in Partitions:
-        rhop = rho.ptrace(Partition)
-        print('Partition ',Partition, ":", (rhop*rhop).tr())
+for i in range(len(purities)):
+    print('Partition', Partitions[i], ':', np.round(purities[i],3))
 
 ### Step 2:: Perform randomized measurements
-psi = np.reshape(psi,[2]*N)
 Meas_Data = np.zeros((Nu,NM),dtype='int64')
 u = [0]*N
 for iu in range(Nu):
     print('Data acquisition {:d} % \r'.format(int(100*iu/(Nu))),end = "",flush=True)
     for i in range(N):
         u[i] = SingleQubitRotation(random_gen,mode)
-    prob = Simulate_Meas_pseudopure(N, psi, p, u)
+    prob = ObtainOutcomeProbabilities(N, qstate, u , p)
     Meas_Data[iu,:] = Sampling_Meas(prob,N,NM)
-    #Meas_Data[iu,:] = Simulate_Meas_mixed(N, rho, NM, u)
 print('Measurement data generated')
 
 ### Step 3:: Reconstruct purities from measured bitstrings
 N_part = len(Partitions)
 X = np.zeros((Nu,N_part))
 Purity = np.zeros(N_part)
+TracedSystems =  [ [x for x in range(N) if x not in p ] for p in Partitions]
 for iu in range(Nu):
     print('PostProcessing {:d} % \r'.format(int(100*iu/(Nu))),end = "",flush=True)
     prob = get_prob(Meas_Data[iu,:],N)

@@ -4,11 +4,9 @@ import cmath
 from qutip import *
 import random 
 from scipy import linalg
-import sys
-sys.path.append("src")
-from ObtainMeasurements import *
-from AnalyzeMeasurements import *
-from PreprocessingImportanceSampling import *
+from src.ObtainMeasurements import *
+from src.AnalyzeMeasurements import *
+from src.PreprocessingImportanceSampling import *
 
 ### Initiate Random Generator
 a = random.SystemRandom().randrange(2 ** 32 - 1) #Init Random Generator
@@ -61,7 +59,7 @@ for iu in range(Nu_uni):
     print('Data acquisition {:d} % \r'.format(int(100*iu/(Nu_uni))),end = "",flush=True)
     for iq in range(N):
         u[iq] = SingleQubitRotation(random_gen,mode)
-    Prob = Simulate_Meas_mixed(N, rho, u)
+    Prob = ObtainOutcomeProbabilities_mixed(N, rho, u)
     Meas_Data_uni[iu,:] = Sampling_Meas(Prob, N, NM_uni)
 print('Measurement data generated for uniform sampling')
 
@@ -101,7 +99,7 @@ for iparts in range(num_partitions):
         print('Data acquisition {:d} % \r'.format(int(100*iu/(Nu_IS[iparts]))),end = "",flush=True)
         for iq in range(N_subsystem):
             u[iq] = SingleQubitRotationIS(theta_is[iq,iu],phi_is[iq,iu])
-        Prob = Simulate_Meas_mixed(N_subsystem, rho_subsystem, u)
+        Prob = ObtainOutcomeProbabilities_mixed(N_subsystem, rho_subsystem, u)
         Meas_Data_IS[iu,:] = Sampling_Meas(Prob, N_subsystem, NM_IS[iparts])
     print('Measurement data generated for importance sampling \n')
     

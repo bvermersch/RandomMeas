@@ -20,7 +20,6 @@ from qutip import *
 import random 
 from scipy import linalg
 
-    
 def get_prob(meas_data,NN):
     NM = len(meas_data)
     prob = np.bincount(meas_data,minlength=2**NN)/NM

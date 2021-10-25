@@ -20,11 +20,9 @@ import cmath
 from qutip import *
 import random 
 from scipy import linalg
-import sys
-sys.path.append("src")
-from ObtainMeasurements import *
-from AnalyzeMeasurements import *
-from PreprocessingImportanceSampling import *
+from src.ObtainMeasurements import *
+from src.AnalyzeMeasurements import *
+from src.PreprocessingImportanceSampling import *
 
 ### Initiate Random Generator
 a = random.SystemRandom().randrange(2 ** 32 - 1) #Init Random Generator
@@ -75,8 +73,8 @@ for iu in range(Nu):
     print('Data acquisition {:d} % \r'.format(int(100*iu/(Nu))),end = "",flush=True)
     for iq in range(N):
         u[iq] = SingleQubitRotation(random_gen,mode)
-    Prob1 = Simulate_Meas_pseudopure(N, GHZ_state, p_depo1, u)
-    Prob2 = Simulate_Meas_pseudopure(N, GHZ_state,p_depo2,u)
+    Prob1 = ObtainOutcomeProbabilities_pseudopure(N, GHZ_state, u, p_depo1)
+    Prob2 = ObtainOutcomeProbabilities_pseudopure(N, GHZ_state, u, p_depo2)
     Meas_Data_uni_1[iu,:] = Sampling_Meas(Prob1, N, NM) ## bit string data from the first device
     Meas_Data_uni_2[iu,:] = Sampling_Meas(Prob2, N, NM) ## bit string data from the second device
     #Meas_Data[iu,:] = Simulate_Meas_mixed(N, rho, NM, u)
@@ -116,8 +114,8 @@ for iu in range(Nu):
     print('Data acquisition {:d} % \r'.format(int(100*iu/(Nu))),end = "",flush=True)
     for iq in range(N):
         u[iq] = SingleQubitRotationIS(theta_is[iq,iu],phi_is[iq,iu])
-    Prob1 = Simulate_Meas_pseudopure(N, GHZ_state, p_depo1, u)
-    Prob2 = Simulate_Meas_pseudopure(N, GHZ_state,p_depo2,u)
+    Prob1 = ObtainOutcomeProbabilities_pseudopure(N, GHZ_state, u, p_depo1)
+    Prob2 = ObtainOutcomeProbabilities_pseudopure(N, GHZ_state, u, p_depo2)
     Meas_Data_IS_1[iu,:] = Sampling_Meas(Prob1, N, NM) ## bitstring data from the first device
     Meas_Data_IS_2[iu,:] = Sampling_Meas(Prob2, N, NM) ## bitstring data from the second device
 print('Measurement data generated for importance sampling \n')

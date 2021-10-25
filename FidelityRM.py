@@ -21,10 +21,8 @@
 import random
 import numpy as np
 from scipy import linalg
-import sys
-sys.path.append("src")
-from ObtainMeasurements import *
-from AnalyzeMeasurements import *
+from src.ObtainMeasurements import *
+from src.AnalyzeMeasurements import *
 #from qutip import *
 
 
@@ -79,9 +77,9 @@ for iu in range(Nu):
     print('Data acquisition {:d} % \r'.format(int(100*iu/(Nu))),end = "",flush=True)
     for i in range(N):
         u[i] = SingleQubitRotation(random_gen,mode)
-    prob1 = Simulate_Meas_pseudopure(N, psi, p1, u)
+    prob1 = ObtainOutcomeProbabilities_pseudopure(N, psi, u, p1)
     Meas_Data1[iu,:] = Sampling_Meas(prob1,N,NM)
-    prob2 = Simulate_Meas_pseudopure(N, psi, p2, u)
+    prob2 = ObtainOutcomeProbabilities_pseudopure(N, psi, u, p2)
     Meas_Data2[iu,:] = Sampling_Meas(prob2,N,NM)
     #Meas_Data[iu,:] = Simulate_Meas_mixed(N, rho, NM, u)
 print('Measurement data generated \n')
