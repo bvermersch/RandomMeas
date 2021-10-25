@@ -12,7 +12,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-# Codes to reconstruct the purity via Importance Sampling
+# Code to reconstruct the cross-platform fidelity via Importance Sampling
 
 import numpy as np
 import math
@@ -31,13 +31,13 @@ a = random.SystemRandom().randrange(2 ** 32 - 1) #Init Random Generator
 random_gen = np.random.RandomState(a)
 
 ### This script estimates the fidelity between two noisy GHZ states realized in two separate devices using uniform sampling and importance sampling from an ideal pure GHZ state
-### Capable of simulatingtill N = 25 qubits !!!
+### Capable of simulating until N = 25 qubits !!!
 
 N = 15 ## Number of qubits of the GHZ state
 d = 2**N ## Hilbert space dimension
 
-# Consider realizing the two noisy versions of the GHZ state experimentally. Noise given by depolarization noise strength p_depo
-p_depo1 = 0.5
+# Consider realizing the two noisy versions of the GHZ state experimentally given by the depolarization noise
+p_depo1 = 0.3
 p_depo2 = 0.5
 
 
@@ -56,6 +56,7 @@ GHZ_state = np.reshape(GHZ, [2]*N)
 
 
 ### Importance sampling provides best performances for Nu ~ O(N) and NM ~O(2^N) !!
+
 Nu = 20 # number of unitaries to be used
 NM = d*5 # number of measurements to be performed for each unitary
 burn_in = 1 # determines the number of samples to be rejected during metropolis: (nu*burn_in) 
@@ -68,7 +69,7 @@ print('Randomized measurements using uniform sampling')
 Meas_Data_uni_1 = np.zeros((Nu,NM),dtype='int64')
 Meas_Data_uni_2 = np.zeros((Nu,NM),dtype='int64')
 
-## Perform randomized measurements using same the uniformly sampled unitaries on both the setups
+## Perform randomized measurements using the same uniformly sampled unitaries on both the devices
 u = [0]*N
 for iu in range(Nu):
     print('Data acquisition {:d} % \r'.format(int(100*iu/(Nu))),end = "",flush=True)
@@ -77,7 +78,7 @@ for iu in range(Nu):
     Prob1 = Simulate_Meas_pseudopure(N, GHZ_state, p_depo1, u)
     Prob2 = Simulate_Meas_pseudopure(N, GHZ_state,p_depo2,u)
     Meas_Data_uni_1[iu,:] = Sampling_Meas(Prob1, N, NM) ## bit string data from the first device
-    Meas_Data_uni_2[iu,:] = Sampling_Meas(Prob2, N, NM) ## bitstring data from the second device
+    Meas_Data_uni_2[iu,:] = Sampling_Meas(Prob2, N, NM) ## bit string data from the second device
     #Meas_Data[iu,:] = Simulate_Meas_mixed(N, rho, NM, u)
 print('Measurement data generated for uniform sampling \n')
 
@@ -107,7 +108,7 @@ print('Randomized measurements using importance sampling ')
 # Importance sampling of the angles (theta_is) and (phi_is) using metropolis algorithm from a pure GHZ state
 theta_is, phi_is, n_r, N_s, p_IS = MetropolisSampling_pure(N, GHZ_state,Nu, burn_in) 
 
-## Step 2: Perform randomized measurements with the generated the importance sampled unitaries in both the setups
+## Step 2: Perform randomized measurements with the same generated importance sampled unitaries in both the devices
 Meas_Data_IS_1 = np.zeros((Nu,NM),dtype='int64')
 Meas_Data_IS_2 = np.zeros((Nu,NM),dtype='int64')
 u = [0]*N
