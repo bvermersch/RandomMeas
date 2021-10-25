@@ -23,27 +23,26 @@ import numpy as np
 from scipy import linalg
 from src.ObtainMeasurements import *
 from src.AnalyzeMeasurements import *
-#from qutip import *
 
 
 ## Parameters
 N = 7 # Number of qubits to analyze
 Nu = 500 # Number of random unitaries to be used
-NM = 1000 # Number of projective measurements (shots) per random unitary
+NM = 500 # Number of projective measurements (shots) per random unitary
 mode = 'CUE'
 Partitions =  [list(range(Nsub)) for Nsub in range(1,N+1)]
 
-### Initiate Random Generator
-a = random.SystemRandom().randrange(2 ** 32 - 1) #Init Random Generator
-random_gen = np.random.RandomState(a)
-
 ### Step 1:: Create a quantum state
 
-# The quantum state is represented by a variable qstate and is stored as numpy.array of type numpy.complex_ )
-# It can be a pure state psi of dimension (2**N,) or a mixed state rho of dimension (2**N,2**N).
-#
+# The quantum state qstate is stored as numpy.array of type numpy.complex_
+
+# qstate can be
+# - a pure state |psi> represented by a numpy array of shape (2**N,)
+# - a mixed state rho reprresented by a numpy array of shape (2**N, 2**N)
+
 # An additional parameter p can be specified to admix the identity
-# |psi><psi| ->  (1-p)*|psi><psi| + p*1/2**N or rho ->  (1-p)*rho + p*1/2**N
+#  - |psi><psi| ->  (1-p)*|psi><psi| + p*1/2**N or
+#  - rho ->  (1-p)*rho + p*1/2**N
 
 ## A GHZ state
 qstate = np.zeros(2**N,dtype=np.complex_)
@@ -51,35 +50,45 @@ qstate[0] = 1./np.sqrt(2)
 qstate[-1] = 1./np.sqrt(2)
 if (N>16):
     print('Please reduce N (or adapt the call to np.unpackbits)')
-p = 0.1
+p = 0.0
 
 ### A random mixed state
-import qutip
-qstate = qutip.rand_dm(2**N,pure=True).full()
-p=0.1
-
+#import qutip
+#qstate = qutip.rand_dm(2**N).full()
+#p=0.1
 
 ## Optional: calculate exact purities with Qutip partial trace function
-from  src.ObtainExactValues import obtainExactPurities as obtExPur
-purities = obtExPur(N,qstate, Partitions,p)
-print('Exact Purities')
-for i in range(len(purities)):
-    print('Partition', Partitions[i], ':', np.round(purities[i],4))
+
+#from  src.ObtainExactValues import obtainExactPurities as obtExPur
+#purities = obtExPur(N,qstate, Partitions,p)
+#print('Exact Purities')
+#for i in range(len(purities)):
+#    print('Partition', Partitions[i], ':', np.round(purities[i],4))
+
 
 ### Step 2:: Perform randomized measurements
-Meas_Data = np.zeros((Nu,NM),dtype='int64')
-u = [0]*N
+
+
+### Initiate Random Generator
+a = random.SystemRandom().randrange(2 ** 32 - 1) #Init Random Generator
+random_gen = np.random.RandomState(a)
+
+### Generate Random Unitaries
+unitaries=np.zeros((Nu,N,2,2),dtype=np.complex_)
+for iu in range(Nu):
+    for i in range(N):
+        unitaries[iu,i]=SingleQubitRotation(random_gen,mode)
+print('Random unitaries generated')
+
+### Simulate the randomized measurements
+Meas_Data = np.zeros((Nu,NM),dtype='int64') ## array to store the measurement results as integers representing the measured bitstrings
 for iu in range(Nu):
     print('Data acquisition {:d} % \r'.format(int(100*iu/(Nu))),end = "",flush=True)
-    for i in range(N):
-        u[i] = SingleQubitRotation(random_gen,mode)
-    prob = ObtainOutcomeProbabilities(N, qstate, u , p)
+    prob = ObtainOutcomeProbabilities(N, qstate, unitaries[iu] , p)
     Meas_Data[iu,:] = Sampling_Meas(prob,N,NM)
 print('Measurement data generated')
 
-
 ### Step 3:: Reconstruct purities from measured bitstrings
-
 N_part = len(Partitions)
 X = np.zeros((Nu,N_part))
 Purity = np.zeros(N_part)
@@ -92,7 +101,6 @@ for iu in range(Nu):
         X[iu,i_part] = unbias(get_X(prob_subsystem,len(Partitions[i_part])), len(Partitions[i_part]), NM)
 Purity = np.mean(X,0)
 
-#Purity = unbias(np.mean(X,0),N,NM)
 print("Measured Purities")
 for i_part in range(N_part):
     print('Partition ',Partitions[i_part], ":", np.round(Purity[i_part],4))

@@ -82,7 +82,6 @@ for iu in range(Nu):
     probe = get_prob(Meas_Data_uni[iu,:], N)
     X_uni[iu] = get_X(probe,N)
 
-
 p2_uni = 0 # purity given by uniform sampling
 p2_uni = unbias(np.mean(X_uni),N,NM)
 
@@ -92,10 +91,20 @@ print('Randomized measurements using importance sampling with Nu = '+str(Nu)+' a
 # Importance sampling of the angles (theta_is) and (phi_is) using metropolis algorithm from a pure GHZ state
 theta_is, phi_is, n_r, N_s, p_IS = MetropolisSampling_pure(N, GHZ_state,Nu, burn_in) 
 
-Meas_Data_IS = np.zeros((Nu,NM),dtype='int64')
 
-## Step 2: Perform randomized measurements with the generated importance sampled unitaries
+### Step: Randomized measurements
+
+## Step 2a: Perform the actual experiment on your quantum machine
+# Store angles   theta_is, phi_is on the hard drive
+# np.savetxt('theta_is.txt',theta_is) ## text file with Nu rows and N columns containing angles
+# np.savetxt('phi_is.txt',phi_is) ## text file with Nu rows and N columns containing angles
+# >>>> Run your quantum machine <<<<
+# Load measurement results from hard drive as an array of shape (Nu,NM) containing integers
+#Meas_Data_IS = np.load('MeasurementResults.npy',dtype='int64')
+
+## Step 2b: Simulate randomized measurements with the generated importance sampled unitaries
 u = [0]*N
+Meas_Data_IS=np.zeros((Nu,NM),dtype='int64')
 for iu in range(Nu):
     print('Data acquisition {:d} % \r'.format(int(100*iu/(Nu))),end = "",flush=True)
     for iq in range(N):
