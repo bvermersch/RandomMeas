@@ -8,10 +8,6 @@ from src.ObtainMeasurements import *
 from src.AnalyzeMeasurements import *
 from src.PreprocessingImportanceSampling import *
 
-### Initiate Random Generator
-a = random.SystemRandom().randrange(2 ** 32 - 1) #Init Random Generator
-random_gen = np.random.RandomState(a)
-
 ### This script estimates the topological entanglement entropy S_topo of a state using importance sampling and uniform sampling.
 
 N = 9 ## total number of qubits of the state in study
@@ -34,7 +30,7 @@ qubit_partitions = [[0,1,5],[2,3,7],[3,6,8],[0,1,2,3,5,7],[0,1,4,5,6,8],[2,3,4,6
 Traced_systems = [[2,3,4,6,7,8],[0,1,2,4,5,7],[0,1,2,4,5,7],[4,6,8],[2,3,7],[0,1,5],[]] ## qubit indices that are traced out for each sub-system
 num_partitions = len(qubit_partitions) ## total number of partitions
 
-
+## Parameters
 Nu_uni = 1000 ## number of unitaries used for uniform sampling
 NM_uni = 10000 ## number of measurements performed for each uniformly sampled unitary
 
@@ -44,12 +40,11 @@ NM_IS = [100000]*6 + [100000] ## number of measurements done for each importance
 burn_in = 1
 mode = 'CUE'
 
-print('Evalaution of S_topo using uniform sampling with Nu = '+str(Nu_uni)+' and NM = '+str(NM_uni)+' \n ')
-## storing purities for each partitions
-p2_subsystems_IS = np.zeros(num_partitions)
-p2_subsystems_uni = np.zeros(num_partitions)
-p2_theory = np.zeros(num_partitions)
+### Initiate Random Generator
+a = random.SystemRandom().randrange(2 ** 32 - 1) #Init Random Generator
+random_gen = np.random.RandomState(a)
 
+print('Evalaution of S_topo using uniform sampling with Nu = '+str(Nu_uni)+' and NM = '+str(NM_uni)+' \n ')
 
 ### Perform randomized measurements with uniform sampling
 
@@ -59,7 +54,7 @@ for iu in range(Nu_uni):
     print('Data acquisition {:d} % \r'.format(int(100*iu/(Nu_uni))),end = "",flush=True)
     for iq in range(N):
         u[iq] = SingleQubitRotation(random_gen,mode)
-    Prob = ObtainOutcomeProbabilities_mixed(N, rho, u)
+    Prob = ObtainOutcomeProbabilities_mixed(N, rho, u, p =0)
     Meas_Data_uni[iu,:] = Sampling_Meas(Prob, N, NM_uni)
 print('Measurement data generated for uniform sampling')
 
@@ -72,10 +67,13 @@ for iu in range(Nu_uni):
     for i_part in range(len(qubit_partitions)):
         prob_subsystem = reduce_prob(probe,N,Traced_systems[i_part])
         X[iu,i_part] = unbias(get_X(prob_subsystem,len(qubit_partitions[i_part])), len(qubit_partitions[i_part]), NM_uni)
+        
+p2_subsystems_uni = np.zeros(num_partitions) ## storing purities for each partitions
 p2_subsystems_uni = np.mean(X,0)
 
 ## Evalauting purities with importance sampling
-
+p2_theory = np.zeros(num_partitions)
+p2_subsystems_IS = np.zeros(num_partitions)
 for iparts in range(num_partitions):
     print('Evaluating Importance sampled purity of the sub-system ' + str(qubit_partitions[iparts])+ ' with Nu = '+str(Nu_IS[iparts])+' and NM = '+str(NM_IS[iparts])+' \n ')
     
@@ -91,7 +89,7 @@ for iparts in range(num_partitions):
 
     # Importance sampling of the angles (theta_is) and (phi_is) using metropolis algorithm of the concerned system
     theta_is, phi_is, n_r, N_s, p_IS = MetropolisSampling_mixed(N_subsystem, rho_subsystem,Nu_IS[iparts], burn_in) 
-
+    
     ## Perform randomized measurements with the generated the importance sampled unitaries
     u = [0]*N
     Meas_Data_IS = np.zeros((Nu_IS[iparts],NM_IS[iparts]),dtype='int64')
@@ -99,7 +97,7 @@ for iparts in range(num_partitions):
         print('Data acquisition {:d} % \r'.format(int(100*iu/(Nu_IS[iparts]))),end = "",flush=True)
         for iq in range(N_subsystem):
             u[iq] = SingleQubitRotationIS(theta_is[iq,iu],phi_is[iq,iu])
-        Prob = ObtainOutcomeProbabilities_mixed(N_subsystem, rho_subsystem, u)
+        Prob = ObtainOutcomeProbabilities_mixed(N_subsystem, rho_subsystem, u, p = 0)
         Meas_Data_IS[iu,:] = Sampling_Meas(Prob, N_subsystem, NM_IS[iparts])
     print('Measurement data generated for importance sampling \n')
     

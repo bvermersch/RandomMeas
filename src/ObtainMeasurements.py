@@ -50,14 +50,14 @@ def SingleQubitRotation(random_gen,mode):
             U = np.eye(2)
     return U
 
-def ObtainOutcomeProbabilities(NN,qstate,u,p=0):
+def ObtainOutcomeProbabilities(NN,qstate,u,p):
 
     if qstate.shape == (2 ** NN,):
         return ObtainOutcomeProbabilities_pseudopure(NN, qstate, u, p)
     else:
         return ObtainOutcomeProbabilities_mixed(NN,qstate,u,p)
 
-def ObtainOutcomeProbabilities_pseudopure(NN, psi, u, p=0):
+def ObtainOutcomeProbabilities_pseudopure(NN, psi, u, p):
     psi = np.reshape(psi, [2] * NN)
     for n in range(NN):
         psi = np.einsum(u[n], [NN, n], psi, list(range(NN)), list(range(n)) + [NN] + list(range(n + 1, NN)))
@@ -65,7 +65,7 @@ def ObtainOutcomeProbabilities_pseudopure(NN, psi, u, p=0):
     probb /= sum(probb)
     return probb
 
-def ObtainOutcomeProbabilities_mixed(NN, rho, u,p=0):
+def ObtainOutcomeProbabilities_mixed(NN, rho, u,p):
         prob_tensor = rho.reshape(tuple([2] * (2*NN)),order='C')
         for n in range(NN):
             prob_tensor = np.einsum(u[n], [2*NN, n], prob_tensor, list(range(NN))+list(range(n+NN,2*NN)), np.conjugate(u[n]), [2*NN,NN+n], list(range(n)) + [2*NN] + list(range(n + 1, NN)) + list(range(NN+n+1,2*NN)))

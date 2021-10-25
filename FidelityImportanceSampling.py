@@ -24,19 +24,43 @@ from src.ObtainMeasurements import *
 from src.AnalyzeMeasurements import *
 from src.PreprocessingImportanceSampling import *
 
-### Initiate Random Generator
-a = random.SystemRandom().randrange(2 ** 32 - 1) #Init Random Generator
-random_gen = np.random.RandomState(a)
+## Parameters
+N = 15 # Number of qubits to analyze
+d = 2**N
+Nu = 20 # Number of random unitaries to be used
+NM = d*2 # Number of projective measurements (shots) per random unitary
+mode = 'CUE'
+burn_in = 1 # determines the number of samples to be rejected during metropolis: (nu*burn_in) 
 
-### This script estimates the fidelity between two noisy GHZ states realized in two separate devices using uniform sampling and importance sampling from an ideal pure GHZ state
-### Capable of simulating until N = 25 qubits !!!
 
-N = 15 ## Number of qubits of the GHZ state
-d = 2**N ## Hilbert space dimension
+### Step 1:: Create a quantum state
 
-# Consider realizing the two noisy versions of the GHZ state experimentally given by the depolarization noise
-p_depo1 = 0.3
-p_depo2 = 0.5
+# The quantum state qstate is stored as numpy.array of type numpy.complex_
+
+# qstate can be
+# - a pure state |psi> represented by a numpy array of shape (2**N,)
+# - a mixed state rho reprresented by a numpy array of shape (2**N, 2**N)
+
+# An additional parameter p can be specified to admix the identity
+#  - |psi><psi| ->  (1-p)*|psi><psi| + p*1/2**N or
+#  - rho ->  (1-p)*rho + p*1/2**N
+
+## An ideal GHZ state
+qstate = np.zeros(2**N,dtype=np.complex_)
+qstate[0] = 1./np.sqrt(2)
+qstate[-1] = 1./np.sqrt(2)
+
+### A random mixed state
+#import qutip
+#qstate = qutip.rand_dm(2**N).full()
+#p_depo1 = 0.1
+#p_depo2 = 0.1
+
+
+
+## Consider realizing the two noisy versions of the GHZ state experimentally given by the depolarization noise
+p_depo1 = 0.2
+p_depo2 = 0.4
 
 
 ## Theoretical purity and fidelity esitmates:
@@ -46,40 +70,33 @@ p2_theory = 1 ## Purity of the ideal pure GHZ state
 fidelity_theory = (1-p_depo1)*(1-p_depo2) + (p_depo1*p_depo2)/d**2 + (1-p_depo1)*p_depo2/d + (1-p_depo2)*p_depo1/d 
 fidelity_theory /= max(p2_exp1, p2_exp2) ## Fidelity between the 2 realized states
 
-### Creating the ideal pure GHZ state:
-GHZ = np.zeros(d)
-GHZ[0] = (1/2)**(0.5)
-GHZ[-1] = (1/2)**(0.5)
-GHZ_state = np.reshape(GHZ, [2]*N)
+### Initiate Random Generator
+a = random.SystemRandom().randrange(2 ** 32 - 1) #Init Random Generator
+random_gen = np.random.RandomState(a)
 
 
-### Importance sampling provides best performances for Nu ~ O(N) and NM ~O(2^N) !!
+### Perform Randomized measurements 
+print('Randomized measurements using uniform sampling on each device')
 
-Nu = 20 # number of unitaries to be used
-NM = d*5 # number of measurements to be performed for each unitary
-burn_in = 1 # determines the number of samples to be rejected during metropolis: (nu*burn_in) 
-mode = 'CUE'
+### Generate Random Unitaries
+unitaries=np.zeros((Nu,N,2,2),dtype=np.complex_)
+for iu in range(Nu):
+    for i in range(N):
+        unitaries[iu,i]=SingleQubitRotation(random_gen,mode)
+print('Random unitaries generated using uniform sampling')
 
-### Step 2: Perform Randomized measurements classically to get bit string data 
-## This step can be replaced by the actual experimentally recorded bit strings for the applied unitaries
-
-print('Randomized measurements using uniform sampling')
-Meas_Data_uni_1 = np.zeros((Nu,NM),dtype='int64')
-Meas_Data_uni_2 = np.zeros((Nu,NM),dtype='int64')
-
-## Perform randomized measurements using the same uniformly sampled unitaries on both the devices
-u = [0]*N
+### Simulate the randomized measurements
+Meas_Data_uni_1 = np.zeros((Nu,NM),dtype='int64') ## array to store the measurement results as integers representing the measured bitstrings of the first device
+Meas_Data_uni_2 = np.zeros((Nu,NM),dtype='int64') ## array to store the measurement results as integers representing the measured bitstrings of the second device
 for iu in range(Nu):
     print('Data acquisition {:d} % \r'.format(int(100*iu/(Nu))),end = "",flush=True)
-    for iq in range(N):
-        u[iq] = SingleQubitRotation(random_gen,mode)
-    Prob1 = ObtainOutcomeProbabilities_pseudopure(N, GHZ_state, u, p_depo1)
-    Prob2 = ObtainOutcomeProbabilities_pseudopure(N, GHZ_state, u, p_depo2)
-    Meas_Data_uni_1[iu,:] = Sampling_Meas(Prob1, N, NM) ## bit string data from the first device
-    Meas_Data_uni_2[iu,:] = Sampling_Meas(Prob2, N, NM) ## bit string data from the second device
-    #Meas_Data[iu,:] = Simulate_Meas_mixed(N, rho, NM, u)
+    prob1 = ObtainOutcomeProbabilities_pseudopure(N, qstate, unitaries[iu] , p_depo1)
+    prob2 = ObtainOutcomeProbabilities_pseudopure(N, qstate, unitaries[iu] , p_depo2)
+    Meas_Data_uni_1[iu,:] = Sampling_Meas(prob1,N,NM)
+    Meas_Data_uni_2[iu,:] = Sampling_Meas(prob2,N,NM)
 print('Measurement data generated for uniform sampling \n')
 
+## Estimate the fidelity and purities of each device with uniform sampling
 X_uni_1 = np.zeros(Nu)
 X_uni_2 = np.zeros(Nu)
 X_uni_fidelity = np.zeros(Nu)
@@ -101,27 +118,43 @@ RM_fidelity_uni = np.mean(X_uni_fidelity)
 RM_fidelity_uni /= max(p2_uni_1, p2_uni_2)
 
 
-### Step 1: Preprocessing step for importance sampling Sample Y and Z rotation angles (2N angles for each unitary u)  
-print('Randomized measurements using importance sampling ')
-# Importance sampling of the angles (theta_is) and (phi_is) using metropolis algorithm from a pure GHZ state
-theta_is, phi_is, n_r, N_s, p_IS = MetropolisSampling_pure(N, GHZ_state,Nu, burn_in) 
+### Step 1: Preprocessing step for importance sampling. Sample Y and Z rotation angles (2N angles for each unitary u)  
+print('Randomized measurements using importance sampling on each device')
+# Importance sampling of the angles (theta_is) and (phi_is) using metropolis algorithm from an ideal GHZ state
+theta_is, phi_is, n_r, N_s, p_IS = MetropolisSampling_pure(N, qstate,Nu, burn_in) 
 
-## Step 2: Perform randomized measurements with the same generated importance sampled unitaries in both the devices
-Meas_Data_IS_1 = np.zeros((Nu,NM),dtype='int64')
-Meas_Data_IS_2 = np.zeros((Nu,NM),dtype='int64')
-u = [0]*N
+### Step: Randomized measurements
+
+## Step 2a: Perform the actual experiment on your quantum machine
+# Store angles   theta_is, phi_is on the hard drive
+# np.savetxt('theta_is.txt',theta_is) ## text file with Nu rows and N columns containing angles
+# np.savetxt('phi_is.txt',phi_is) ## text file with Nu rows and N columns containing angles
+# >>>> Run the two quantum machines <<<<
+# Load measurement results from hard drive as an array of shape (Nu,NM) containing integers from each device
+#Meas_Data_IS_1 = np.load('MeasurementResults_Device1.npy',dtype='int64')
+#Meas_Data_IS_2 = np.load('MeasurementResults_Device2.npy',dtype='int64')
+
+## Step 2b: Simulate randomized measurements with the generated importance sampled unitaries
+
+### Generate the local importance sampled Random Unitaries
+unitaries=np.zeros((Nu,N,2,2),dtype=np.complex_)
+for iu in range(Nu):
+    for i in range(N):
+        unitaries[iu,i]=SingleQubitRotationIS(theta_is[i,iu],phi_is[i,iu])
+print('Importance sampled random unitaries generated')
+
+### Simulate the randomized measurements
+Meas_Data_IS_1 = np.zeros((Nu,NM),dtype='int64') ## array to store the measurement results as integers representing the measured bitstrings from the first device
+Meas_Data_IS_2 = np.zeros((Nu,NM),dtype='int64') ## array to store the measurement results as integers representing the measured bitstrings from the second device
 for iu in range(Nu):
     print('Data acquisition {:d} % \r'.format(int(100*iu/(Nu))),end = "",flush=True)
-    for iq in range(N):
-        u[iq] = SingleQubitRotationIS(theta_is[iq,iu],phi_is[iq,iu])
-    Prob1 = ObtainOutcomeProbabilities_pseudopure(N, GHZ_state, u, p_depo1)
-    Prob2 = ObtainOutcomeProbabilities_pseudopure(N, GHZ_state, u, p_depo2)
-    Meas_Data_IS_1[iu,:] = Sampling_Meas(Prob1, N, NM) ## bitstring data from the first device
-    Meas_Data_IS_2[iu,:] = Sampling_Meas(Prob2, N, NM) ## bitstring data from the second device
+    Prob1 = ObtainOutcomeProbabilities_pseudopure(N, qstate, unitaries[iu], p_depo1)
+    Prob2 = ObtainOutcomeProbabilities_pseudopure(N, qstate, unitaries[iu], p_depo2)
+    Meas_Data_IS_1[iu,:] = Sampling_Meas(Prob1, N, NM) 
+    Meas_Data_IS_2[iu,:] = Sampling_Meas(Prob2, N, NM) 
 print('Measurement data generated for importance sampling \n')
 
-## Step 3: Estimation of the purities p2_uni and p2_IS
-
+## Step 3: Estimation of the fidelity and purities of each quantum device using importance sampling
 X_imp_1 = np.zeros(Nu)
 X_imp_2 = np.zeros(Nu)
 X_imp_fidelity = np.zeros(Nu)
@@ -144,6 +177,7 @@ for iu in range(Nu):
     RM_fidelity_IS += X_imp_fidelity[iu]*n_r[iu]/p_IS[iu,0]/N_s
 
 RM_fidelity_IS /= max(p2_IS_1,p2_IS_2)
+
 
 ## results of the first device
 print('p2 (True value) of the first state = ', p2_exp1)
