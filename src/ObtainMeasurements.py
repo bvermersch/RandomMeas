@@ -58,21 +58,10 @@ def ObtainOutcomeProbabilities(NN,qstate,u,p=0):
         return ObtainOutcomeProbabilities_mixed(NN,qstate,u,p)
 
 def ObtainOutcomeProbabilities_pseudopure(NN, psi, u, p=0):
-    alphabet = "abcdefghijklmnopqsrtuvwxyz"
-    alphabet_cap = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    d = 2**NN
-    Co = ''
-    psi.reshape(tuple([2]*(NN)),order='C')
-    for i in range(NN):
-        Co += alphabet[i]
-        Co += alphabet_cap[i]
-        Co += ','
-    Co += alphabet_cap[:NN]
-    Co += '->'
-    Co += alphabet[:NN]
-    Listt = u+[psi]
-    psiu = np.einsum(Co,*Listt,optimize = True).flatten()
-    probb = np.abs(psiu)**2*(1-p) + p/d ## makes the probabilities noisy by adding white noise
+    psi = np.reshape(psi, [2] * NN)
+    for n in range(NN):
+        psi = np.einsum(u[n], [NN, n], psi, list(range(NN)), list(range(n)) + [NN] + list(range(n + 1, NN)))
+    probb = np.abs(np.ravel(psi))**2*(1-p) + p/2**NN ## makes the probabilities noisy by adding white noise
     probb /= sum(probb)
     return probb
 
@@ -81,7 +70,7 @@ def ObtainOutcomeProbabilities_mixed(NN, rho, u,p=0):
         for n in range(NN):
             prob_tensor = np.einsum(u[n], [2*NN, n], prob_tensor, list(range(NN))+list(range(n+NN,2*NN)), np.conjugate(u[n]), [2*NN,NN+n], list(range(n)) + [2*NN] + list(range(n + 1, NN)) + list(range(NN+n+1,2*NN)))
         probb= np.real(prob_tensor.reshape(2**NN))
-        probb = (1-p)*probb + p/2**NN
+        probb = (1-p)*probb + p/2**NN ## makes the probabilities noisy by adding white noise
         probb /= sum(probb)
         return probb
 

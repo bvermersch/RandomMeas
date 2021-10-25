@@ -29,7 +29,7 @@ from src.AnalyzeMeasurements import *
 ## Parameters
 N = 7 # Number of qubits to analyze
 Nu = 500 # Number of random unitaries to be used
-NM = 500 # Number of projective measurements (shots) per random unitary
+NM = 1000 # Number of projective measurements (shots) per random unitary
 mode = 'CUE'
 Partitions =  [list(range(Nsub)) for Nsub in range(1,N+1)]
 
@@ -51,13 +51,12 @@ qstate[0] = 1./np.sqrt(2)
 qstate[-1] = 1./np.sqrt(2)
 if (N>16):
     print('Please reduce N (or adapt the call to np.unpackbits)')
-p = 0.
+p = 0.1
 
 ### A random mixed state
-#import qutip
-#qstate = qutip.rand_dm(2**N).full()
-#p=0.
-
+import qutip
+qstate = qutip.rand_dm(2**N,pure=True).full()
+p=0.1
 
 
 ## Optional: calculate exact purities with Qutip partial trace function
@@ -65,7 +64,7 @@ from  src.ObtainExactValues import obtainExactPurities as obtExPur
 purities = obtExPur(N,qstate, Partitions,p)
 print('Exact Purities')
 for i in range(len(purities)):
-    print('Partition', Partitions[i], ':', np.round(purities[i],3))
+    print('Partition', Partitions[i], ':', np.round(purities[i],4))
 
 ### Step 2:: Perform randomized measurements
 Meas_Data = np.zeros((Nu,NM),dtype='int64')
@@ -78,7 +77,9 @@ for iu in range(Nu):
     Meas_Data[iu,:] = Sampling_Meas(prob,N,NM)
 print('Measurement data generated')
 
+
 ### Step 3:: Reconstruct purities from measured bitstrings
+
 N_part = len(Partitions)
 X = np.zeros((Nu,N_part))
 Purity = np.zeros(N_part)
@@ -90,6 +91,8 @@ for iu in range(Nu):
         prob_subsystem = reduce_prob(prob,N,TracedSystems[i_part])
         X[iu,i_part] = unbias(get_X(prob_subsystem,len(Partitions[i_part])), len(Partitions[i_part]), NM)
 Purity = np.mean(X,0)
+
 #Purity = unbias(np.mean(X,0),N,NM)
+print("Measured Purities")
 for i_part in range(N_part):
-    print('Partition ',Partitions[i_part], ":", Purity[i_part], '2nd Renyi Entropy : ',-np.log2(Purity[i_part]))
+    print('Partition ',Partitions[i_part], ":", np.round(Purity[i_part],4))
