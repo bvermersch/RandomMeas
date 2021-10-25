@@ -92,7 +92,7 @@ print('Randomized measurements using importance sampling with Nu = '+str(Nu)+' a
 theta_is, phi_is, n_r, N_s, p_IS = MetropolisSampling_pure(N, GHZ_state,Nu, burn_in) 
 
 
-### Step: Randomized measurements
+### Step: Randomized measurements ()
 
 ## Step 2a: Perform the actual experiment on your quantum machine
 # Store angles   theta_is, phi_is on the hard drive
