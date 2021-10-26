@@ -12,7 +12,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-# Code to reconstruct the cross-platform fidelity via Importance Sampling
+# Code to reconstruct the cross-platform fidelity and purities of two quantum devices via Importance Sampling
 
 import numpy as np
 import math
@@ -179,14 +179,14 @@ for iu in range(Nu):
 RM_fidelity_IS /= max(p2_IS_1,p2_IS_2)
 
 
-## results of the first device
+## Purity results of the first device
 print('p2 (True value) of the first state = ', p2_exp1)
 print('p2 (uniform sampling) of the first state = ', p2_uni_1)
 print('p2 (Importance sampling) = ', p2_IS_1)
 print ('Error uniform: ', np.round(100*(np.abs(p2_uni_1-p2_exp1)/p2_exp1),2), '%')
 print ('Error IS: ', np.round(100*(np.abs(p2_IS_1-p2_exp1)/p2_exp1),2), '% \n')
 
-## results of the second device
+## Purity results of the second device
 print('p2 (True value) of the second state = ', p2_exp2)
 print('p2 (uniform sampling) of the second state = ', p2_uni_2)
 print('p2 (Importance sampling) = ', p2_IS_2)

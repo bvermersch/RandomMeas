@@ -33,7 +33,7 @@ The Fidelity between two noisy versions of the same state realized on two differ
 + Typical use: Up to 25 qubits
 
 ## Topological entanglement entropy from importance sampling of randomized measurements
-The topological entanglement entropy "S_topo" is obtained with an order of magnitude less measurements compared to the standard approach of uniform sampling using  importance sampling of random single qubit unitaries, from the modelled approximation of the quantum state.
+The topological entanglement entropy "S_topo" is extracted using standard approach of uniform sampling and the new method of importance sampling of random single qubit unitaries, from the modelled approximation of the quantum state.
 
 + [Original Paper](https://arxiv.org/pdf/2104.01180.pdf)
 + [Python Script](PurityImportanceSamplingToricCode.py)

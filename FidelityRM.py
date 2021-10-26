@@ -54,8 +54,8 @@ qstate = np.zeros(2**N,dtype=np.complex_)
 qstate[0] = 1./np.sqrt(2)
 qstate[-1] = 1./np.sqrt(2)
     
-p_1 = 0.1 ## noisy state realized in the first device using depolarization noise 
-p_2 = 0.2 ## noisy state realized in the second device using depolarization noise 
+p_1 = 0.1 ## noisy state realized using depolarization noise in the first device  
+p_2 = 0.2 ## noisy state realized using depolarization noise in the second device  
 
 
 ### A random mixed state
