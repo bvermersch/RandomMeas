@@ -14,7 +14,7 @@ N = 9 ## total number of qubits of the state in study
 d = 2**N ## Hilbert space dimension
 
 ## load the toric code state:
-rho = np.load("N_9_sites_7_11_17_12_16_20_15_21_25.npy") 
+rho = np.load("src/N_9_sites_7_11_17_12_16_20_15_21_25.npy") 
 
 ## returns the state rho_traced for the considered partition 
 def sub_system(rho,part):
