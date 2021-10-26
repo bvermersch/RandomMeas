@@ -1,4 +1,4 @@
-#   Copyright 2020 Benoit Vermersch, Andreas Elben
+#   Copyright 2020 Benoit Vermersch, Andreas Elben, Aniket Rath
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -21,118 +21,86 @@
 import random
 import numpy as np
 from scipy import linalg
-#from qutip import *
+from src.ObtainMeasurements import *
+from src.AnalyzeMeasurements import *
 
-def SingleQubitRotation(random_gen,mode):
-    U = 1j*np.zeros((2,2))
-    if mode=='CUE':
-        #Generate a 2x2 CUE matrix (ref: http://www.ams.org/notices/200705/fea-mezzadri-web.pdf)
-        U = (random_gen.randn(2,2)+1j*random_gen.randn(2,2))/np.sqrt(2)
-        q,r = linalg.qr(U)
-        d = np.diagonal(r)
-        ph = d/np.absolute(d)
-        U = np.multiply(q,ph,q)
-    else:
-        ## Equivalently we can measure randomly in the x,y, or z basis:
-        pick = random_gen.randint(3)
-        if pick==0: #Measurement setting y: we apply pi/4 along x before measurement
-            U[0,0] = 1./np.sqrt(2)
-            U[1,1] = 1./np.sqrt(2)
-            U[0,1] = -1j*1./np.sqrt(2)
-            U[1,0] = -1j*1./np.sqrt(2)
-        elif pick==1: #Measurement setting x: we apply pi/4 along y before measurement
-            U[0,0] = 1./np.sqrt(2)
-            U[1,1] = 1./np.sqrt(2)
-            U[0,1] = -1./np.sqrt(2)
-            U[1,0] = 1./np.sqrt(2)
-        else:
-            U = np.eye(2)
-    return U
 
 ## Parameters
-N = 3 # Number of qubits to analyze (necessary <= 16 for the present code due to the use of the function np.unpackbits)
+N = 7 # Number of qubits to analyze
+Nu = 500 # Number of random unitaries to be used
+NM = 500 # Number of projective measurements (shots) per random unitary
+mode = 'CUE'
+Partitions =  [list(range(Nsub)) for Nsub in range(1,N+1)]
+
+### Step 1:: Create a quantum state
+
+# The quantum state qstate is stored as numpy.array of type numpy.complex_
+
+# qstate can be
+# - a pure state |psi> represented by a numpy array of shape (2**N,)
+# - a mixed state rho reprresented by a numpy array of shape (2**N, 2**N)
+
+# An additional parameter p can be specified to admix the identity
+#  - |psi><psi| ->  (1-p)*|psi><psi| + p*1/2**N or
+#  - rho ->  (1-p)*rho + p*1/2**N
+
+## A GHZ state
+qstate = np.zeros(2**N,dtype=np.complex_)
+qstate[0] = 1./np.sqrt(2)
+qstate[-1] = 1./np.sqrt(2)
 if (N>16):
     print('Please reduce N (or adapt the call to np.unpackbits)')
-Nu = 2000 # Number of random unitaries to be used
-NM = 200 # Number of projective measurements (shots) per random unitary
-mode = 'xyz'
-Partition_string = ['1'*x +'0'*(N-x) for x in range(1,N+1)] ## List of partitions for which we want to extract the purity (ex: '100000..' only the first spin)
-Partition_string = [ '0'*x+'1'+'0'*(N-x-1) for x in range(N)]
-Partition_string += [ '1'*N ]
+p = 0.0
+
+### A random mixed state
+#import qutip
+#qstate = qutip.rand_dm(2**N).full()
+#p=0.1
+
+## Optional: calculate exact purities with Qutip partial trace function
+
+#from  src.ObtainExactValues import obtainExactPurities as obtExPur
+#purities = obtExPur(N,qstate, Partitions,p)
+#print('Exact Purities')
+#for i in range(len(purities)):
+#    print('Partition', Partitions[i], ':', np.round(purities[i],4))
+
+
+### Step 2:: Perform randomized measurements
+
 
 ### Initiate Random Generator
 a = random.SystemRandom().randrange(2 ** 32 - 1) #Init Random Generator
 random_gen = np.random.RandomState(a)
 
-### Step 1:: Create a quantum state
-## A GHZ state
-rho = np.zeros((2**N,2**N))
-rho[0,0] = 1.
-#rho[-1,-1] = 1./2
-#rho[-1,0] = 1./2
-#rho[0,-1] = 1./2
-### Or a qutip random density matrix combined with a pure product state qubit
-import qutip
-rho = qutip.tensor(qutip.rand_dm(2**(N-1),pure=True),qutip.basis(2,0)*qutip.basis(2,0).dag()).data.todense()
-
-## Optional: calculate exact purities with Qutip partial trace function
-rhoQ = qutip.Qobj(rho,dims=[ [2]*N,[2]*N] )
-print('Exact Purities')
-for p in Partition_string:
-    if p=='1'*N:
-        print('Partition ',p, ":", (rhoQ*rhoQ).tr())
-    else:
-        rhop = rhoQ.ptrace([i for i in range(N) if p[i]=='1'])
-        print('Partition ',p, ":", (rhop*rhop).tr())
-
-### Step 2:: Perform randomized measurements
-path_info = np.einsum_path('ab,bc,ac->a',rho,rho,rho,optimize='greedy')
-Meas_Data = np.zeros((Nu,NM),dtype=int)  # Meas_data will store the measured bit strings (NM per random unitary)
+### Generate Random Unitaries
+unitaries=np.zeros((Nu,N,2,2),dtype=np.complex_)
 for iu in range(Nu):
-        #Construct random unitary as a product of single qubit rotations
-        Unitary = SingleQubitRotation(random_gen,mode)
-        for i in range(1,N):
-            Unitary = np.kron(Unitary,SingleQubitRotation(random_gen,mode))
+    for i in range(N):
+        unitaries[iu,i]=SingleQubitRotation(random_gen,mode)
+print('Random unitaries generated')
 
-        #Apply on state and compute bitstrings probabilities
-        Prob_bitstrings = np.real(np.einsum('ab,bc,ac->a',Unitary,rho,np.conj(Unitary),optimize=path_info[0]))
-        Prob_bitstrings /= sum(Prob_bitstrings)
-
-        #Sample NM measurements according to the bitstrings probabilities
-        Meas_Data[iu,:] = random_gen.choice(range(2**N),p=Prob_bitstrings,size=NM)
+### Simulate the randomized measurements
+Meas_Data = np.zeros((Nu,NM),dtype='int64') ## array to store the measurement results as integers representing the measured bitstrings
+for iu in range(Nu):
+    print('Data acquisition {:d} % \r'.format(int(100*iu/(Nu))),end = "",flush=True)
+    prob = ObtainOutcomeProbabilities(N, qstate, unitaries[iu] , p)
+    Meas_Data[iu,:] = Sampling_Meas(prob,N,NM)
 print('Measurement data generated')
 
 ### Step 3:: Reconstruct purities from measured bitstrings
-N_Partition = np.array([p.count('1') for p in Partition_string]) # Number of spins in each partition
-Partition = np.array([int(p,2) for p in Partition_string])
-nbp = len(Partition) #Number of partitions to analyze
-# Convert each partition in 'qubit' representation
-Partition = np.unpackbits(np.array(Partition, dtype=">i2").view(np.uint8)).reshape((nbp,16))[:,-N:]
-Purity = np.zeros(nbp)
-Hist_Hamming_Distances = np.zeros((N+1,nbp)) #Array use for storage
-
-path_info = np.einsum_path('ac,c->a',np.zeros((NM,N)), np.zeros(N),optimize='greedy')
-#Process the result proced by each unitary
+N_part = len(Partitions)
+X = np.zeros((Nu,N_part))
+Purity = np.zeros(N_part)
+TracedSystems =  [ [x for x in range(N) if x not in p ] for p in Partitions]
 for iu in range(Nu):
-    #Compare each pair of bit string
-    Pairs = np.bitwise_xor(Meas_Data[iu][:,None],Meas_Data[iu][None,:])
-    # Calculate the Hamming distance for each qubit and each pair of bit string
-    Hamming_Array_Full = np.unpackbits(np.array(Pairs, dtype=">i2").view(np.uint8)).reshape((NM**2,16))[:,-N:]
-    # Loop over partitions to extract the relevant total Hamming distances
-    for i in range(nbp):
-        # Get the total Hamming distance
-        Hamming_Distances = np.array(np.einsum('ac,c->a',Hamming_Array_Full,Partition[i,:],optimize=path_info[0]),dtype=int)
-        # Count the number of each Hamming Distance when summing over each pair
-        Counts = np.bincount(Hamming_Distances)
-        Hist_Hamming_Distances[:len(Counts),i]  += Counts
+    print('PostProcessing {:d} % \r'.format(int(100*iu/(Nu))),end = "",flush=True)
+    prob = get_prob(Meas_Data[iu,:],N)
+    for i_part in range(N_part):
+        prob_subsystem = reduce_prob(prob,N,TracedSystems[i_part])
+        X[iu,i_part] = unbias(get_X(prob_subsystem,len(Partitions[i_part])), len(Partitions[i_part]), NM)
+Purity = np.mean(X,0)
 
-#Extraction of the purity based on averaging histograms of Hamming distances
-for i in range(nbp):
-    #They key formula for randomized measurements
-    Purity[i] = 2**N_Partition[i]/Nu*sum(Hist_Hamming_Distances[:N_Partition[i]+1,i]*(-2.)**(-np.arange(N_Partition[i]+1)))
-    #Remove statistical bias
-    Purity[i] = Purity[i]/(NM*(NM-1))-2**N_Partition[i]/(NM-1)
-
-print('Reconstructed Purities')
-for i,p in enumerate(Partition_string):
-    print('Partition ',p, ":", Purity[i], '2nd Renyi Entropy : ',-np.log2(Purity[i]))
+print("Measured Purities")
+for i_part in range(N_part):
+    print('Partition ',Partitions[i_part], ":", np.round(Purity[i_part],4))
