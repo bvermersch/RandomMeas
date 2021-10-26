@@ -97,7 +97,7 @@ for iparts in range(num_partitions):
     # np.savetxt('phi_is.txt',phi_is) ## text file with Nu_IS[iparts] rows and N_subsystem columns containing angles
     # >>>> Run your quantum machine <<<<
     # Load measurement results from hard drive of each specific subsystem as an array of shape (Nu_IS[iparts],NM_IS[iparts]) containing integers
-    #Meas_Data_IS = np.load('MeasurementResults_Partition+str(iparts)+'.npy',dtype='int64')
+    #Meas_Data_IS = np.load('MeasurementResults_Partition'+str(iparts)+'.npy',dtype='int64')
 
     ## Step 2b: Simulate randomized measurements with the generated importance sampled unitaries for the specific subsystem
     
