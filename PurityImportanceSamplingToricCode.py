@@ -81,27 +81,42 @@ for iparts in range(num_partitions):
     d_subsystem = 2**N_subsystem ## Hilbert space dimension
     rho_subsystem = np.array(sub_system(rho,qubit_partitions[iparts])) ## theoretical state modeling the state realized in the experiment
     
-    
-    ## Theoretical purity esitmates for each concerned partition:
+
+    ## Theoretical purity estimates for each concerned partition:
     p2_theory[iparts] = np.real(np.trace(np.dot(rho_subsystem,rho_subsystem)))
     
-    ### Step 1: Preprocessing for importance sampling
-
-    # Importance sampling of the angles (theta_is) and (phi_is) using metropolis algorithm of the concerned system
+    ### Step 1: Preprocessing step for importance sampling. Sample Y and Z rotation angles (N_subsystem angles for each unitary u)  
+    # Importance sampling of the angles (theta_is) and (phi_is) using metropolis algorithm from the concerned subsystem of the toric code ground state
     theta_is, phi_is, n_r, N_s, p_IS = MetropolisSampling_mixed(N_subsystem, rho_subsystem,Nu_IS[iparts], burn_in) 
     
-    ## Perform randomized measurements with the generated the importance sampled unitaries
-    u = [0]*N
-    Meas_Data_IS = np.zeros((Nu_IS[iparts],NM_IS[iparts]),dtype='int64')
+    ### Step: Randomized measurements
+    
+    ## Step 2a: Perform the actual experiment on your quantum machine
+    # Store angles   theta_is, phi_is on the hard drive for the specific subsystem
+    # np.savetxt('theta_is.txt',theta_is) ## text file with Nu_IS[iparts] rows and N_subsystem columns containing angles
+    # np.savetxt('phi_is.txt',phi_is) ## text file with Nu_IS[iparts] rows and N_subsystem columns containing angles
+    # >>>> Run your quantum machine <<<<
+    # Load measurement results from hard drive of each specific subsystem as an array of shape (Nu_IS[iparts],NM_IS[iparts]) containing integers
+    #Meas_Data_IS = np.load('MeasurementResults_Partition+str(iparts)+'.npy',dtype='int64')
+
+    ## Step 2b: Simulate randomized measurements with the generated importance sampled unitaries for the specific subsystem
+    
+    ### Generate the local importance sampled Random Unitaries
+    unitaries=np.zeros((Nu_IS[iparts],N_subsystem,2,2),dtype=np.complex_)
+    for iu in range(Nu_IS[iparts]):
+        for i in range(N_subsystem):
+            unitaries[iu,i]=SingleQubitRotationIS(theta_is[i,iu],phi_is[i,iu])
+    print('Importance sampled random unitaries generated')
+    
+    ### Simulate the randomized measurements
+    Meas_Data_IS = np.zeros((Nu_IS[iparts],NM_IS[iparts]),dtype='int64') ## array to store the measurement results as integers representing the measured bitstrings of the specific chosen partition
     for iu in range(Nu_IS[iparts]):
         print('Data acquisition {:d} % \r'.format(int(100*iu/(Nu_IS[iparts]))),end = "",flush=True)
-        for iq in range(N_subsystem):
-            u[iq] = SingleQubitRotationIS(theta_is[iq,iu],phi_is[iq,iu])
-        Prob = ObtainOutcomeProbabilities_mixed(N_subsystem, rho_subsystem, u, p = 0)
-        Meas_Data_IS[iu,:] = Sampling_Meas(Prob, N_subsystem, NM_IS[iparts])
-    print('Measurement data generated for importance sampling \n')
-    
-    ## Estimation of the puritiy p2_IS
+        prob = ObtainOutcomeProbabilities_mixed(N_subsystem, rho_subsystem, unitaries[iu] , p = 0)
+        Meas_Data_IS[iu,:] = Sampling_Meas(prob,N_subsystem,NM_IS[iparts])
+    print('Measurement data generated for importance sampling')
+
+    ## Estimation of the purity for each subsystem using the concerned importance sampled unitaries
     X_imp = np.zeros(Nu_IS[iparts])
     for iu in range(Nu_IS[iparts]):
         print('Postprocessing {:d} % \r'.format(int(100*iu/(Nu_IS[iparts]))),end = "",flush=True)
