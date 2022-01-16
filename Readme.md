@@ -45,6 +45,7 @@ The Quantum Fisher information (QFI) can be expressed as a converging series of 
 + [Original Paper](https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.127.260501)
 + [Python Script](QFI_classicalshadows.py)
 + Typical use: Up to 10 qubits
+
 License: Apache 2.0
 
 Second version: Oct 2021
