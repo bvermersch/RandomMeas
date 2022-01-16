@@ -30,10 +30,10 @@ from src.PreprocessingImportanceSampling import *
 
 
 ## Parameters
-N = 16 # Number of qubits to analyze
+N = 15 # Number of qubits to analyze
 d = 2**N
 Nu = 50 # Number of random unitaries to be used
-NM = d*4 # Number of projective measurements (shots) per random unitary
+NM = 2**13 # Number of projective measurements (shots) per random unitary
 mode = 'CUE'
 burn_in = 1 # determines the number of samples to be rejected during metropolis: (nu*burn_in) 
 
