@@ -40,7 +40,7 @@ The topological entanglement entropy "S_topo" is extracted using standard approa
 + Typical use: Up to 15 qubits
 
 ## Quantum Fisher information using randomized measurements
-The Quantum Fisher information QFI can be expressed as a converging series of polynomial lower bounds as a function the density matrix and can be measured by the classical shadow formalism. The script in particular shows the extraction of the first two lower bounds.
+The Quantum Fisher information (QFI) can be expressed as a converging series of polynomial lower bounds as a function the density matrix and can be measured by the classical shadow formalism. The script in particular shows the extraction of the first two lower bounds.
 
 + [Original Paper](https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.127.260501)
 + [Python Script](QFI_classicalshadows.py)
