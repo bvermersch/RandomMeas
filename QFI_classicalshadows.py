@@ -14,8 +14,8 @@ from src.PreprocessingImportanceSampling import *
 ## Parameters
 N = 5 # Number of qubits to analyze
 d = 2**N
-Nu = 1000 # Number of random unitaries to be used
-NM = 1#d*4 # Number of projective measurements (shots) per random unitary
+Nu = 10000 # Number of random unitaries to be used
+NM = 1 # Number of projective measurements (shots) per random unitary
 mode = 'CUE'
 
 
@@ -44,7 +44,7 @@ qstate[-1] = 1./np.sqrt(2)
 # Consider realizing a noisy version of the GHZ state experimentally. Noise given by depolarization noise strength p_depo
 p_depo = 0
 
-### Defining the collective spin operator along a direction given by spin:
+### Defining the collective spin operator along a given direction specified by spin:
 def operator(spin):
     col_spin = 0*rand_dm(d).full()
     for ii in range(N):
@@ -66,7 +66,7 @@ a = random.SystemRandom().randrange(2 ** 32 - 1) #Init Random Generator
 random_gen = np.random.RandomState(a)
 
 ### Perform Randomized measurements 
-print('Randomized measurements with Nu = '+str(Nu)+' and NM = '+str(NM))
+print('Randomized measurements with Nu = '+str(Nu)+' and NM = '+str(NM) +' on a '+str(N)+' qubit state')
 
 ### Generate Random Unitaries
 unitaries=np.zeros((Nu,N,2,2),dtype=np.complex_)
@@ -135,7 +135,8 @@ for iu in range(Nu):
     
     rho2As += np.einsum('ab,bc,cd',rho1,A_rho,A)
     rho3As += np.einsum('ab,bc,cd',rho2,A_rho,A)
-
+    print('Progress bar {:d} % \r'.format(int(100*iu/(Nu))),end = "",flush=True)
+    
 
 A2 = (A**2).full()
 
