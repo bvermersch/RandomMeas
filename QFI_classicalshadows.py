@@ -130,7 +130,6 @@ for iu in range(Nu):
     rho1s += rho1
     rho2s += rho2
     rho3s += rho3
-    #A_rhos += A_rho
     
     rho2As += np.einsum('ab,bc,cd',rho1,A_rho,A)
     rho3As += np.einsum('ab,bc,cd',rho2,A_rho,A)
