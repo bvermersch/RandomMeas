@@ -126,7 +126,6 @@ for iu in range(Nu):
     rho3 = np.einsum('ab,bc,cd',rho1, rho1, rho1)
     
     A_rho = np.einsum('ab,bc',A,rho1)
-    #rho_A = rho1*A
     
     rho1s += rho1
     rho2s += rho2
