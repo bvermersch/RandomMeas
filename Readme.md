@@ -22,7 +22,7 @@ The fidelity between quantum states realized on two different quantum devices is
 ## Purity from importance sampling of randomized measurements
 The purity is obtained with exponentially less measurements compared to the standard approach of uniform sampling. This is based on importance sampling of random single qubit unitaries, with respect to an approximation of the quantum state.
 
-+ [Original Paper](https://arxiv.org/abs/2102.13524)
++ [Original Paper](https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.127.200503)
 + [Tutorial](TutorialImportanceSampling.ipynb)
 + [Python Script](PurityImportanceSampling.py)
 + Typical use: Up to 25 qubits
@@ -41,6 +41,15 @@ The topological entanglement entropy "S_topo" is extracted using standard approa
 + [Python Script](PurityImportanceSamplingToricCode.py)
 + Typical use: Up to 15 qubits
 
+<<<<<<< HEAD
+>>>>>>> dev_AE
+=======
+## Quantum Fisher information using randomized measurements
+The Quantum Fisher information (QFI) can be expressed as a converging series of polynomial lower bounds as a function the density matrix and can be measured by the classical shadow formalism. The script in particular shows the extraction of the first two lower bounds.
+
++ [Original Paper](https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.127.260501)
++ [Python Script](QFI_classicalshadows.py)
++ Typical use: Up to 10 qubits
 >>>>>>> dev_AE
 
 License: Apache 2.0
