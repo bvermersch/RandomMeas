@@ -42,7 +42,7 @@ qstate[-1] = 1./np.sqrt(2)
 #p_depo = 0.1
 
 # Consider realizing a noisy version of the GHZ state experimentally. Noise given by depolarization noise strength p_depo
-p_depo = 0
+p_depo = 0.1
 
 ### Defining the collective spin operator along a given direction specified by spin:
 def operator(spin):
