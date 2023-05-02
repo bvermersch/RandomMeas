@@ -39,6 +39,14 @@ The Quantum Fisher information (QFI) can be expressed as a converging series of 
 + [Python Script](QFI_classicalshadows.py)
 + Typical use: Up to 10 qubits
 
+## Purity from Common Randomized Measurements (CRM)
+We provide enhanced estimation of the purity with lower statistical errors. This is done by executing an offline post-processing of the experimental randomized measurement data wrt a classically simulated randomized measurement data obtained from a theory approximation of the quantum state.        
+
++ [Original Paper](https://arxiv.org/pdf/2304.12292.pdf)
++ [Python Script](PurityCRM.py)
++ Typical use: Up to 16 qubits
+
+
 License: Apache 2.0
 
 Second version: Oct 2021
